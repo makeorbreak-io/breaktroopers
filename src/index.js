@@ -1,109 +1,43 @@
 require('dotenv').config();
 
-const axios = require('axios');
+// Initialize using verification token from environment variables
+const createSlackEventAdapter = require('@slack/events-api').createSlackEventAdapter;
+const slackEvents = createSlackEventAdapter(process.env.SLACK_VERIFICATION_TOKEN);
+const port = process.env.PORT || 3000;
+
+// Initialize an Express application
 const express = require('express');
 const bodyParser = require('body-parser');
-const qs = require('querystring');
-const ticket = require('./ticket');
-
+const { WebClient } = require('@slack/client');
 const app = express();
 
-/*
- * Parse application/x-www-form-urlencoded && application/json
- */
-app.use(bodyParser.urlencoded({ extended: true }));
+const web = new WebClient(process.env.SLACK_BOT_TOKEN);
+
+// You must use a body parser for JSON before mounting the adapter
 app.use(bodyParser.json());
 
-app.get('/', (req, res) => {
-  res.send('<h2>The Slash Command and Dialog app is running</h2> <p>Follow the' +
-  ' instructions in the README to configure the Slack App and your environment variables.</p>');
-});
-
-/*
- * Endpoint to receive /helpdesk slash command from Slack.
- * Checks verification token and opens a dialog to capture more info.
- */
-app.post('/commands', (req, res) => {
-  // extract the verification token, slash command text,
-  // and trigger ID from payload
-  const { token, text, trigger_id } = req.body;
-
-  // check that the verification token matches expected value
-  if (token === process.env.SLACK_VERIFICATION_TOKEN) {
-    // create the dialog payload - includes the dialog structure, Slack API token,
-    // and trigger ID
-    const dialog = {
-      token: process.env.SLACK_ACCESS_TOKEN,
-      trigger_id,
-      dialog: JSON.stringify({
-        title: 'Submit a helpdesk ticket',
-        callback_id: 'submit-ticket',
-        submit_label: 'Submit',
-        elements: [
-          {
-            label: 'Title',
-            type: 'text',
-            name: 'title',
-            value: text,
-            hint: '30 second summary of the problem',
-          },
-          {
-            label: 'Description',
-            type: 'textarea',
-            name: 'description',
-            optional: true,
-          },
-          {
-            label: 'Urgency',
-            type: 'select',
-            name: 'urgency',
-            options: [
-              { label: 'Low', value: 'Low' },
-              { label: 'Medium', value: 'Medium' },
-              { label: 'High', value: 'High' },
-            ],
-          },
-        ],
-      }),
-    };
-
-    // open the dialog by calling dialogs.open method and sending the payload
-    axios.post('https://slack.com/api/dialog.open', qs.stringify(dialog))
-      .then((result) => {
-        console.log('dialog.open: %o', result.data);
-        res.send('');
-      }).catch((err) => {
-        console.log('dialog.open call failed: %o', err);
-        res.sendStatus(500);
-      });
-  } else {
-    console.log('Verification token mismatch');
-    res.sendStatus(500);
+app.post('/', (req, res) => {
+  if(req.body.challenge) {
+    res.send({challenge : req.body.challenge});
+    return;
   }
 });
 
-/*
- * Endpoint to receive the dialog submission. Checks the verification token
- * and creates a Helpdesk ticket
- */
-app.post('/interactive-component', (req, res) => {
-  const body = JSON.parse(req.body.payload);
 
-  // check that the verification token matches expected value
-  if (body.token === process.env.SLACK_VERIFICATION_TOKEN) {
-    console.log(`Form submission received: ${body.submission.trigger_id}`);
+// Mount the event handler on a route
+// NOTE: you must mount to a path that matches the Request URL that was configured earlier
+app.use('/slack/events', slackEvents.expressMiddleware());
 
-    // immediately respond with a empty 200 response to let
-    // Slack know the command was received
-    res.send('');
-
-    // create Helpdesk ticket
-    ticket.create(body.user.id, body.submission);
-  } else {
-    console.log('Token mismatch');
-    res.sendStatus(500);
-  }
+// Attach listeners to events by Slack Event "type". See: https://api.slack.com/events/message.im
+slackEvents.on('message', (event)=> {
+  console.log(`Received a message event: user ${event.user} in channel ${event.channel} says ${event.text}`);
 });
+
+// Handle errors (see `errorCodes` export)
+slackEvents.on('error', console.error);
+
+// See: https://api.slack.com/methods/chat.postMessage
+web.chat.postMessage({ channel: "CA6DX1HQD", text: "Hello World!" });
 
 app.listen(process.env.PORT, () => {
   console.log(`App listening on port ${process.env.PORT}!`);

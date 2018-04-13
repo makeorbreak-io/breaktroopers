@@ -1,0 +1,13 @@
+{
+  "name": "Breaktroopers",
+  "description": "Slack bot para jogar ao preço certo.",
+  "keywords": ["node", "express", "slack"],
+  "env": {
+    "SLACK_ACCESS_TOKEN": {
+      "description": "Your Slack app's xoxp token"
+    },
+    "SLACK_VERIFICATION_TOKEN": {
+      "description": "Your Slack app's verification token"
+    }
+  }
+}

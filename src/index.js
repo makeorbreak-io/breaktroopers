@@ -6,12 +6,13 @@ const slackEvents = createSlackEventAdapter(process.env.SLACK_VERIFICATION_TOKEN
 const port = process.env.PORT || 3000
 
 // Initialize an Express application
-const express = require('express')
-const bodyParser = require('body-parser')
-const { WebClient } = require('@slack/client')
-const app = express()
+const express = require('express');
+const bodyParser = require('body-parser');
+const { WebClient } = require('@slack/client');
 
-const web = new WebClient(process.env.SLACK_BOT_TOKEN)
+const app = express();
+const re = /.*?<@.*?>.*?/i;
+const web = new WebClient(process.env.SLACK_BOT_TOKEN);
 
 // You must use a body parser for JSON before mounting the adapter
 app.use(bodyParser.json())
@@ -23,20 +24,56 @@ app.post('/', (req, res) => {
 })
 
 // Mount the event handler on a route
-// NOTE: you must mount to a path that matches the Request URL that was configured earlier
-app.use('/slack/events', slackEvents.expressMiddleware())
+app.use('/slack/events', slackEvents.expressMiddleware());
 
-// Attach listeners to events by Slack Event "type". See: https://api.slack.com/events/message.im
+// Event triggered on messages
 slackEvents.on('message', (event) => {
-  console.log(`Received a message event: user ${event.user} in channel ${event.channel} says ${event.text}`)
-})
+  
+  if(event.bot_id || event.subtype) {
+    return;
+  }
+
+  if(event.text.match(re)) {
+    return;
+  }
+
+  console.log(`Received a message event: user ${event.user} in channel ${event.channel} says ${event.text}`);
+  console.log('%o', event);
+  sendMessage(event.channel, `You sent: ${event.text}`);
+
+});
+
+// Event triggered on @Bot_name
+slackEvents.on('app_mention', (event) => {
+  let text = event.text.toLowerCase();
+  
+  if(text.includes('qual')) {
+    sendMessage(event.channel, 'o preço desta montra final é!!!!!!');
+  } 
+  
+  if (text.includes('alheira')) {
+    sendMessage(event.channel, `Uma alheira?!? Bambora <@${event.user}>`);
+  }
+  
+  if(text.includes('espetáculo')) {
+    // start game;
+  }
+
+});
+>>>>>>> Stashed changes
 
 // Handle errors (see `errorCodes` export)
 slackEvents.on('error', console.error)
 
-// See: https://api.slack.com/methods/chat.postMessage
-web.chat.postMessage({ channel: 'CA6DX1HQD', text: 'Hello World!' })
+
+// Function to send a message to a specific channel
+const sendMessage = function(channel, text) {
+  web.chat.postMessage({ channel: channel, text: text });
+};
 
 app.listen(port, () => {
-  console.log(`App listening on port ${port}!`)
-})
+  console.log(`App listening on port ${port}!`);
+});
+
+// Send initial Hello World message
+web.chat.postMessage({ channel: "CA69HJNN5", text: "Hello World!" });

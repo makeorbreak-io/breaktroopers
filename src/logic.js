@@ -1,3 +1,5 @@
+const getRandomProduct = require('./randomproduct')
+
 const MAX_PLAYERS = 4
 
 const State = Object.freeze({
@@ -6,14 +8,12 @@ const State = Object.freeze({
 })
 
 class Game {
-  gameFinished
-
-  Game (channelId, gameFinished) {
+  Game (channelId, onGameFinished) {
     this.channelId = channelId
-    this.gameFinished = gameFinished
+    this.onGameFinished = onGameFinished
     this.answers = {}
-    this.players = {}
-    this.product = Game.getRandomProduct()
+    this.state = State.STARTED
+    this.product = getRandomProduct()
   }
 
   numAnswers () {
@@ -38,6 +38,10 @@ class Game {
     return this.product
   }
 
+  getState () {
+    return this.state
+  }
+
   finish () {
 
     let answersBelowPrice = this.answers.filter(answer => answer.price < this.product.price)
@@ -51,20 +55,15 @@ class Game {
 
     this.state = State.FINISHED
 
-    this.gameFinished(this.channelId, this.winner)
+    this.onGameFinished(this.channelId, this.winner)
   }
 
   getWinner () {
     return this.winner
   }
+}
 
-  static getRandomProduct () {
-    return {
-      title: 'Low Profile Special Cotton Mesh Cap-Black W40S62B',
-      imageUrl: 'https://images-na.ssl-images-amazon.com/images/I/61WvsfC3EIL._UX522_.jpg',
-      summary: '- Cotton\n- Black Low Profile Special Cotton Mesh Cap',
-      description: 'Low profile unstructured Herringbone cotton twill/mesh cap with panels and eyelets, contrasting stitches and under bill, a frayed bill, and self-fabric strap with velcro adjustable. Available in many colors. One size fits most. ',
-      price: 6.46
-    }
-  }
+module.exports = {
+  Game,
+  State
 }

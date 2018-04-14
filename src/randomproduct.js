@@ -23,6 +23,9 @@ function getRandomProduct () {
     console.log(results)
   }).catch(err => {
     console.error(err)
+    for (let error of err.Error) {
+      console.error(error)
+    }
   })
 }
 

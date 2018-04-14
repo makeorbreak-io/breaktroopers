@@ -1,6 +1,7 @@
 const getRandomProduct = require('./randomproduct')
 
 const MAX_PLAYERS = 4
+const GAME_TIMEOUT = 60 * 1000 // in ms
 
 const State = Object.freeze({
   STARTED: 0,
@@ -14,6 +15,8 @@ class Game {
     this.answers = {}
     this.state = State.STARTED
     this.product = getRandomProduct()
+
+    setTimeout(this.finish, GAME_TIMEOUT)
   }
 
   numAnswers () {
@@ -43,6 +46,9 @@ class Game {
   }
 
   finish () {
+    if (this.state === State.FINISHED) {
+      return
+    }
 
     let answersBelowPrice = this.answers.filter(answer => answer.price < this.product.price)
     let noAnswer = {price: 0}
@@ -55,7 +61,7 @@ class Game {
 
     this.state = State.FINISHED
 
-    this.onGameFinished(this.channelId, this.winner)
+    this.onGameFinished(this.channelId, this.winner, this.product.price)
   }
 
   getWinner () {

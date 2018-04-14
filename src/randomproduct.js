@@ -37,4 +37,7 @@ function getRandomProduct () {
     })
 }
 
-module.exports = getRandomProduct
+module.exports = {
+  getRandomProduct,
+  mockProduct
+}

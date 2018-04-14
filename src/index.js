@@ -3,17 +3,16 @@ require('dotenv').config()
 // Initialize using verification token from environment variables
 const createSlackEventAdapter = require('@slack/events-api').createSlackEventAdapter
 const slackEvents = createSlackEventAdapter(process.env.SLACK_VERIFICATION_TOKEN)
+const mentionRegex = /.*?<@.*?>.*?/i
 const port = process.env.PORT || 3000
+const message = require('./message')
 
 // Initialize an Express application
 const express = require('express')
 const bodyParser = require('body-parser')
-const {WebClient} = require('@slack/client')
 const { Game, GameState } = require('./logic')
 
 const app = express()
-const mentionRegex = /.*?<@.*?>.*?/i
-const web = new WebClient(process.env.SLACK_BOT_TOKEN)
 
 // Map for games associated with channels
 const channelToGame = {}
@@ -43,7 +42,7 @@ slackEvents.on('message', (event) => {
 
   console.log(`Received a message event: user ${event.user} in channel ${event.channel} says ${event.text}`)
   console.log('%o', event)
-  sendMessage(event.channel, `You sent: ${event.text}`)
+  message.sendMessage(event.channel, `You sent: ${event.text}`)
 })
 
 // Handle event triggered on @Bot_name
@@ -51,17 +50,17 @@ slackEvents.on('app_mention', (event) => {
   let text = event.text.toLowerCase()
 
   if (text.includes('qual')) {
-    sendMessage(event.channel, 'o preço desta montra final é!!!!!!')
+    message.sendMessage(event.channel, 'o preço desta montra final é!!!!!!')
   }
 
   if (text.includes('alheira')) {
-    sendMessage(event.channel, `Uma alheira?!? Bambora <@${event.user}>`)
+    message.sendMessage(event.channel, `Uma alheira?!? Bambora <@${event.user}>`)
   }
 
   if (text.includes('espetáculo')) {
     if (channelToGame[event.channel]) {
       if (channelToGame[event.channel].getState() !== GameState.FINISHED) {
-        sendMessage(event.channel, 'A game is already in progress')
+        message.sendMessage(event.channel, 'A game is already in progress')
         return
       }
     }
@@ -74,22 +73,14 @@ slackEvents.on('app_mention', (event) => {
 // Handle errors (see `errorCodes` export)
 slackEvents.on('error', console.error)
 
-// Function to send a message to a specific channel
-const sendMessage = function (channel, text) {
-  web.chat.postMessage({channel: channel, text: text})
-}
-
 app.listen(port, () => {
   console.log(`App listening on port ${port}!`)
 })
 
-const onGameFinished = function (channelID, winner, price) {
+const onGameFinished = function (channelID, status, winner, price) {
   if (winner) {
-    sendMessage(channelID, `The price is ${price}! Congrulations <@${winner}>! You won!`)
+    message.sendMessage(channelID, `The price is ${price}! Congrulations <@${winner}>! You won!`)
   } else {
-    sendMessage(channelID, `The price is ${price}, nobody won :(.`)
+    message.sendMessage(channelID, `The price is ${price}, nobody won :(.`)
   }
 }
-
-// Send initial Hello World message
-web.chat.postMessage({channel: 'CA69HJNN5', text: 'Hello World!'})

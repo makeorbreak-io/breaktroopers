@@ -3,17 +3,17 @@ const getRandomProduct = require('./randomproduct')
 const MAX_PLAYERS = 4
 const GAME_TIMEOUT = 60 * 1000 // in ms
 
-const State = Object.freeze({
+const GameState = Object.freeze({
   STARTED: 0,
   FINISHED: 1
 })
 
 class Game {
-  Game (channelId, onGameFinished) {
+  constructor (channelId, onGameFinished) {
     this.channelId = channelId
     this.onGameFinished = onGameFinished
     this.answers = {}
-    this.state = State.STARTED
+    this.state = GameState.STARTED
     this.product = getRandomProduct()
 
     setTimeout(this.finish, GAME_TIMEOUT)
@@ -46,7 +46,7 @@ class Game {
   }
 
   finish () {
-    if (this.state === State.FINISHED) {
+    if (this.state === GameState.FINISHED) {
       return
     }
 
@@ -59,7 +59,7 @@ class Game {
       this.winner = bestAnswer.userId
     }
 
-    this.state = State.FINISHED
+    this.state = GameState.FINISHED
 
     this.onGameFinished(this.channelId, this.winner, this.product.price)
   }
@@ -71,5 +71,5 @@ class Game {
 
 module.exports = {
   Game,
-  State
+  GameState
 }

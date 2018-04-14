@@ -8,6 +8,12 @@ const GameState = Object.freeze({
   FINISHED: 1
 })
 
+const GameFinishStatus = Object.freeze({
+  WINNER: 0,
+  DRAW: 1,
+  NOT_ENOUGH_PLAYERS: 2
+})
+
 class Game {
   constructor (channelId, onGameFinished) {
     this.channelId = channelId
@@ -50,18 +56,26 @@ class Game {
       return
     }
 
+    if (this.numAnswers() < 2) {
+      this.onGameFinished(this.channelId, GameFinishStatus.NOT_ENOUGH_PLAYERS, this.winner, this.product.price)
+      return
+    }
+
     let answersBelowPrice = this.answers.filter(answer => answer.price < this.product.price)
     let noAnswer = {price: 0}
 
     let bestAnswer = answersBelowPrice.entries().reduce((prev, curr) => prev.price > curr.price ? prev : curr, noAnswer)
 
+    let gameFinishStatus = GameFinishStatus.WINNER
+
     if (bestAnswer !== noAnswer) {
       this.winner = bestAnswer.userId
+      gameFinishStatus = GameFinishStatus.DRAW
     }
 
     this.state = GameState.FINISHED
 
-    this.onGameFinished(this.channelId, this.winner, this.product.price)
+    this.onGameFinished(this.channelId, gameFinishStatus, this.winner, this.product.price)
   }
 
   getWinner () {

@@ -1,4 +1,4 @@
-const getRandomProduct = require('./randomproduct')
+const getRandomProductPage = require('./randomproduct')
 
 const MAX_PLAYERS = 4
 const GAME_TIMEOUT = 60 * 1000 // in ms
@@ -20,11 +20,14 @@ class Game {
     this.onGameFinished = onGameFinished
     this.answers = {}
     this.state = GameState.STARTED
-    this.product = getRandomProduct()
-
-    setTimeout(this.finish, GAME_TIMEOUT)
+    this.startGame()
   }
 
+  async startGame () {
+    this.product = await getRandomProductPage.getRandomProductPage()
+    console.log(this.product)
+    setTimeout(this.finish, GAME_TIMEOUT)
+  }
   numAnswers () {
     return Object.keys(this.answers).length
   }
@@ -87,3 +90,4 @@ module.exports = {
   Game,
   GameState
 }
+

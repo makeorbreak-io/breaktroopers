@@ -1,10 +1,12 @@
-const amazon = require('amazon-product-api')
-const axios = require('axios')
+const Axios = require('axios')
 
-const products = amazon.createClient({
-  awsId: process.env.AWS_ACCESS_KEY_ID,
-  awsSecret: process.env.AWS_SECRET_ACCESS_KEY,
-  awsTag: process.env.AWS_TAG
+const URL = 'https://opwyliyqnu-dsn.algolia.net/1/indexes/*/queries?x-algolia-agent=Algolia for vanilla JavaScript (lite) 3.21.1;instantsearch.js 1.11.2;Magento integration (1.11.1);JS Helper 2.18.1&x-algolia-application-id=OPWYLIYQNU&x-algolia-api-key=YzQ2NDk1OGQ5NzMyYzc3ODZjNWFiNTRiODRlYmRkODQ2N2QwOTU3N2I4NDg0MTVhMzFhZjhkNjZjMjQ3ZGI4MWZpbHRlcnM9Jm51bWVyaWNGaWx0ZXJzPXZpc2liaWxpdHlfc2VhcmNoJTNEMQ=='
+
+const axios = Axios.create({
+  baseURL: URL,
+  headers: {
+    'Referer': 'https://www.pcdiga.com'
+  }
 })
 
 const mockProduct = {
@@ -15,10 +17,25 @@ const mockProduct = {
   price: 6.46
 }
 
-function getRandomProductPage () {
-  axios.get('https://data.thimessolutions.com:8081/random')
-    .then(result => console.log(result))
-    .catch(err => console.error(err))
+function buildRequestBody (query) {
+  return {
+    requests: [
+      {
+        indexName: 'prod_pcdiga_pt_products',
+        params: `query=${query}&hitsPerPage=1`
+      }
+    ]
+  }
+}
+
+async function getRandomProductPage () {
+  try {
+    const randQuery = Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 2)
+    const response = await axios.post('', buildRequestBody(randQuery))
+    return response.data.results[0].hits
+  } catch (e) {
+    console.error(e)
+  }
 }
 
 function getRandomProduct () {
@@ -26,18 +43,15 @@ function getRandomProduct () {
     return mockProduct
   }
 
-  products.itemSearch({})
-    .then(results => {
-      console.log(results)
-    }).catch(err => {
-      console.error(err)
-      for (let error of err.Error) {
-        console.error(error)
-      }
-    })
+//  products.itemSearch({})
+//    .then(results => {
+//      console.log(results)
+//    }).catch(err => {
+//    console.error(err)
+//    for (let error of err.Error) {
+//      console.error(error)
+//    }
+//  })
 }
 
-module.exports = {
-  getRandomProduct,
-  mockProduct
-}
+module.exports = {getRandomProduct, getRandomProductPage}

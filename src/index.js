@@ -19,7 +19,6 @@ app.use(bodyParser.json());
 app.post('/', (req, res) => {
   if(req.body.challenge) {
     res.send({challenge : req.body.challenge});
-    return;
   }
 });
 

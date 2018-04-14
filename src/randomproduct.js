@@ -22,7 +22,7 @@ function buildRequestBody (query) {
     requests: [
       {
         indexName: 'prod_pcdiga_pt_products',
-        params: `query=${query}&hitsPerPage=20&maxValuesPerFacet=100&page=0&facets=%5B%22price.EUR.default%22%2C%22in_stock%22%2C%22manufacturer%22%2C%22categories.level0%22%5D&tagFilters=&numericFilters=%5B%22price.EUR.default%3C%3D13828%22%5D`
+        params: `query=${query}&hitsPerPage=1`
       }
     ]
   }
@@ -30,7 +30,9 @@ function buildRequestBody (query) {
 
 async function getRandomProductPage () {
   try {
-    await axios.post('', buildRequestBody(''))
+    const randQuery = Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 2)
+    const response = await axios.post('', buildRequestBody(randQuery))
+    return response.data.results[0].hits
   } catch (e) {
     console.error(e)
   }

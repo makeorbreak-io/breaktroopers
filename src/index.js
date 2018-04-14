@@ -8,7 +8,7 @@ const port = process.env.PORT || 3000
 // Initialize an Express application
 const express = require('express')
 const bodyParser = require('body-parser')
-const { WebClient } = require('@slack/client')
+const {WebClient} = require('@slack/client')
 const app = express()
 
 const web = new WebClient(process.env.SLACK_BOT_TOKEN)
@@ -35,7 +35,7 @@ slackEvents.on('message', (event) => {
 slackEvents.on('error', console.error)
 
 // See: https://api.slack.com/methods/chat.postMessage
-web.chat.postMessage({ channel: 'CA6DX1HQD', text: 'Hello World!' })
+web.chat.postMessage({channel: 'CA70511JR', text: 'Hello World!'})
 
 app.listen(port, () => {
   console.log(`App listening on port ${port}!`)

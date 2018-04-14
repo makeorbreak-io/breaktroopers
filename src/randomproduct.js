@@ -1,4 +1,5 @@
 const amazon = require('amazon-product-api')
+const axios = require('axios')
 
 const products = amazon.createClient({
   awsId: process.env.AWS_ACCESS_KEY_ID,
@@ -14,19 +15,26 @@ const mockProduct = {
   price: 6.46
 }
 
+function getRandomProductPage () {
+  axios.get('https://data.thimessolutions.com:8081/random')
+    .then(result => console.log(result))
+    .catch(err => console.error(err))
+}
+
 function getRandomProduct () {
   if (process.env.MOCK_PRODUCTS) {
     return mockProduct
   }
 
-  products.itemSearch({}).then(results => {
-    console.log(results)
-  }).catch(err => {
-    console.error(err)
-    for (let error of err.Error) {
-      console.error(error)
-    }
-  })
+  products.itemSearch({})
+    .then(results => {
+      console.log(results)
+    }).catch(err => {
+      console.error(err)
+      for (let error of err.Error) {
+        console.error(error)
+      }
+    })
 }
 
 module.exports = getRandomProduct

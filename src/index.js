@@ -6,11 +6,10 @@ const slackEvents = createSlackEventAdapter(process.env.SLACK_VERIFICATION_TOKEN
 const port = process.env.PORT || 3000
 
 // Initialize an Express application
-const express = require('express');
-const bodyParser = require('body-parser');
-const { WebClient } = require('@slack/client');
-
-const app = express();
+const express = require('express')
+const bodyParser = require('body-parser')
+const {WebClient} = require('@slack/client')
+const app = express()
 const re = /.*?<@.*?>.*?/i;
 const web = new WebClient(process.env.SLACK_BOT_TOKEN);
 
@@ -59,12 +58,10 @@ slackEvents.on('app_mention', (event) => {
     // start game;
   }
 
-});
->>>>>>> Stashed changes
+})
 
 // Handle errors (see `errorCodes` export)
 slackEvents.on('error', console.error)
-
 
 // Function to send a message to a specific channel
 const sendMessage = function(channel, text) {

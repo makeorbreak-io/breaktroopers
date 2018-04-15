@@ -61,7 +61,7 @@ class Game {
 
   handleMessage (userId, message) {
     if (this.state === GameState.FINISHED) {
-      sendMessage(this.channelId, userId, 'O jogo já acabou! Para começar um novo, mencione o bot utilizando o simbolo \'@\' seguido da mensagem \'espetáculo\'')
+      sendMessage(this.channelId, 'O jogo já acabou! Para começar um novo, mencione o bot utilizando o simbolo \'@\' seguido da mensagem \'espetáculo\'')
       return
     }
 

@@ -45,6 +45,8 @@ app.use('/slack/events', slackEvents.expressMiddleware())
 
 // Handle event triggered on messages
 slackEvents.on('message', (event) => {
+  console.log(event)
+
   if (event.bot_id || event.subtype) {
     return
   }

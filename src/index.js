@@ -14,7 +14,7 @@ const message = require('./message')
 // Initialize an Express application
 const express = require('express')
 const bodyParser = require('body-parser')
-const {Game, GameState, GameFinishStatus} = require('./logic')
+const {Game, GameState, GameFinishStatus} = require('./game')
 
 const app = express()
 

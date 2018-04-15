@@ -78,7 +78,6 @@ class Game {
       return
     }
 
-    console.log(this.answers)
     let answersBelowPrice = Object.entries(this.answers).filter(p => p[1] < this.product.price)
     let noAnswer = [null, 0]
 

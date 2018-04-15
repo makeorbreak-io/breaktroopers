@@ -7,7 +7,7 @@ const slackEvents = createSlackEventAdapter(process.env.SLACK_VERIFICATION_TOKEN
 const mentionRegex = /.*?<@.*?>.*?/i
 const helpRegex = /help|h|ajuda/i
 const espetaculoRegex = /espetáculo|espetaculo|esbedáculo|esbedaculo/i
-const HELP_STRING = "Bem vindo ao *'O SLACK CERTO'*!! \n > Para jogar com o mítico Mernando Fendes adiciona o bot a um canal público e menciona-o utilizando o simbolo '@' seguido da mensagem 'esbetáculo' \n > O Mernando Fendes vai mostrar um producto ao qual os participantes devem-se juntar enviando apenas uma mensagem no canal com o valor que acham que o producto vale. \n > Ganha aquele que ficar mais perto do valor *sem o ultrapassar*. _Espetáááááculo_! \n > As _triggers words_ disponíveis são: espetáculo, qual, alheira, stats."
+const HELP_STRING = 'Bem vindo ao *\'O SLACK CERTO\'*!! \n > Para jogar com o mítico Mernando Fendes adiciona o bot a um canal público e menciona-o utilizando o simbolo \'@\' seguido da mensagem \'esbetáculo\' \n > O Mernando Fendes vai mostrar um producto ao qual os participantes devem-se juntar enviando apenas uma mensagem no canal com o valor que acham que o producto vale. \n > Ganha aquele que ficar mais perto do valor *sem o ultrapassar*. _Espetáááááculo_! \n > As _triggers words_ disponíveis são: espetáculo, qual, alheira, stats.'
 const port = process.env.PORT || 3000
 const message = require('./message')
 
@@ -55,10 +55,6 @@ slackEvents.on('message', (event) => {
   if (channelToGame[event.channel]) {
     channelToGame[event.channel].handleMessage(event.user, event.text)
   }
-
-  // console.log(`Received a message event: user ${event.user} in channel ${event.channel} says ${event.text}`)
-  // console.log('%o', event)
-  // message.sendMessage(event.channel, `You sent: ${event.text}`)
 })
 
 // Handle event triggered on @Bot_name
@@ -103,6 +99,8 @@ app.listen(port, () => {
 })
 
 const onGameFinished = function (game) {
+  const playAgainMessage = '\nPara jogar novamente, mencione o bot utilizando o simbolo \'@\' seguido da mensagem \'espetáculo\' '
+
   const channelId = game.getChannelId()
   const status = game.getFinishStatus()
   const winner = game.getWinner()
@@ -112,13 +110,13 @@ const onGameFinished = function (game) {
 
   switch (status) {
     case GameFinishStatus.WINNER:
-      message.sendMessage(channelId, `E o preço deste produto éééé: ${price.toFixed(2)}€! Parabéns <@${winner}>! Ganhaste!`)
+      message.sendMessage(channelId, `E o preço deste produto éééé: ${price.toFixed(2)}€! Parabéns <@${winner}>! Ganhaste!${playAgainMessage}`)
       break
     case GameFinishStatus.DRAW:
-      message.sendMessage(channelId, `O preço deste produto é: ${price.toFixed(2)}€, ninguém ganhou :sob:.`)
+      message.sendMessage(channelId, `O preço deste produto é: ${price.toFixed(2)}€, ninguem ganhou :sob:.${playAgainMessage}`)
       break
     case GameFinishStatus.NOT_ENOUGH_PLAYERS:
-      message.sendMessage(channelId, 'O jogo acabou sem jogadores suficientes.')
+      message.sendMessage(channelId, `O jogo acabou sem jogadores suficientes.${playAgainMessage}`)
       break
   }
 }

@@ -15,7 +15,8 @@ const GameFinishStatus = Object.freeze({
 })
 
 class Game {
-  constructor (channelId, onGameFinished) {
+  constructor (channelId, onGameFinished, stats) {
+    this.stats = stats
     this.channelId = channelId
     this.onGameFinished = onGameFinished
     this.answers = {}
@@ -28,6 +29,7 @@ class Game {
     console.log(this.product)
     setTimeout(this.finish, GAME_TIMEOUT)
   }
+
   numAnswers () {
     return Object.keys(this.answers).length
   }
@@ -79,10 +81,15 @@ class Game {
     this.state = GameState.FINISHED
 
     this.onGameFinished(this.channelId, gameFinishStatus, this.winner, this.product.price)
+    this.stats.addGame(this)
   }
 
   getWinner () {
     return this.winner
+  }
+
+  getAnswers () {
+    return this.answers
   }
 }
 

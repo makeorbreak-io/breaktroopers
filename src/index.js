@@ -1,4 +1,5 @@
 require('dotenv').config()
+const Statistics = require('./statistics')
 
 // Initialize using verification token from environment variables
 const createSlackEventAdapter = require('@slack/events-api').createSlackEventAdapter
@@ -16,6 +17,8 @@ const app = express()
 
 // Map for games associated with channels
 const channelToGame = {}
+
+const stats = new Statistics()
 
 // You must use a body parser for JSON before mounting the adapter
 app.use(bodyParser.json())
@@ -66,7 +69,7 @@ slackEvents.on('app_mention', (event) => {
     }
 
     // start game
-    channelToGame[event.channel] = new Game(event.channel, onGameFinished)
+    channelToGame[event.channel] = new Game(event.channel, onGameFinished, stats)
   }
 })
 

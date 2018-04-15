@@ -88,7 +88,7 @@ class Game {
       return
     }
 
-    let answersBelowPrice = Object.entries(this.answers).filter(p => p[1] < this.product.price)
+    let answersBelowPrice = Object.entries(this.answers).filter(p => p[1] <= this.product.price)
     let noAnswer = [null, 0]
 
     let bestAnswer = Object.entries(answersBelowPrice).reduce((prev, curr) => curr[1][1] > prev[1] ? curr[1] : prev, noAnswer)

@@ -1,11 +1,16 @@
 const getRandomProduct = require('./randomproduct')
-const message = require('./message')
+const {sendMessage, sendProduct, sendEphemeral, notify} = require('./message')
 
 const MAX_PLAYERS = 3
+const NOTIFICATION_TIMEOUTS =
+  process.env.NODE_ENV === 'test'
+    ? []
+    : [45 * 1000, 30 * 1000, 15 * 1000, 10 * 1000, 5 * 1000]
+
 const GAME_TIMEOUT = // in ms
   process.env.NODE_ENV === 'test'
     ? 1000
-    : 30 * 1000
+    : 60 * 1000
 
 const GameState = Object.freeze({
   STARTED: 0,
@@ -31,8 +36,13 @@ class Game {
 
   async start () {
     this.product = await getRandomProduct()
-    message.sendProduct(this.channelId, this.product)
+    sendProduct(this.channelId, this.product, GAME_TIMEOUT)
+
     this.timeOut = setTimeout(this.finish.bind(this), GAME_TIMEOUT)
+
+    for (let timeout of NOTIFICATION_TIMEOUTS) {
+      setTimeout(notify.bind(this, this.channelId, timeout), GAME_TIMEOUT - timeout)
+    }
   }
 
   answer (userId, price) {
@@ -52,6 +62,7 @@ class Game {
 
   handleMessage (userId, message) {
     if (this.state === GameState.FINISHED) {
+      sendMessage(this.channelId, userId, 'O jogo já acabou! Para começar um novo, mencione o bot utilizando o simbolo \'@\' seguido da mensagem \'espetáculo\'')
       return
     }
 
@@ -59,6 +70,9 @@ class Game {
 
     if (value && value > 0) {
       this.answer(userId, value)
+      sendEphemeral(this.channelId, userId, `O seu palpite de ${value.toFixed(2)}€ foi registado. Espere até ao final da ronda pelos resultados!`)
+    } else {
+      sendEphemeral(this.channelId, userId, 'Enviou um palpite errado. Os palpites devem ser números decimais. Ex.: \'1\', \'5.7\', \'1,3\'')
     }
   }
 

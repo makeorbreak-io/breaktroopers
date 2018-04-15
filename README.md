@@ -9,6 +9,8 @@ The winner is the user with the guest that is closest to the actual price, witho
 
 To start the game, mention the bot in a channel using `@` and append the [famous word](https://www.youtube.com/watch?v=OMa9iVObGQc) `espetáculo`.
 
+You can also analyse your performance by mentioning the bot and appending `stats`!
+
 
 ## Running
 

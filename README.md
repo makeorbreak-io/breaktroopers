@@ -2,9 +2,13 @@
 
 ## Introduction
 
-_O Slack Certo_ is a Slackbot that simulates the widely-known portuguese late-afternoon show _Preço Certo_. 
+_O Slack Certo_ is a Slackbot that simulates the widely-known Portuguese late-afternoon show _Preço Certo_. 
 
-The bot allows users to play a small and exciting game of price guessing.
+The bot allows users to play a small and exciting game of price guessing using random technological products!
+The winner is the user with the guest that is closest to the actual price, without actually surpassing it.
+
+To start the game, mention the bot in a channel using `@` and append the [famous word](https://www.youtube.com/watch?v=OMa9iVObGQc) `espetáculo`.
+
 
 ## Running
 

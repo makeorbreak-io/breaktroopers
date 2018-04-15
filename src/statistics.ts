@@ -3,11 +3,11 @@ import {Game} from './logic'
 export default class Statistics {
     private stats: any;
 
-    constructor() {
+    public constructor() {
         this.stats = {};
     }
 
-    addGame(game: Game) {
+    public addGame(game: Game) {
         const answers: any = game.getAnswers();
 
         for (let answer of answers) {
@@ -18,7 +18,7 @@ export default class Statistics {
         }
     }
 
-    addStat(answer: any, won: boolean, productPrice: number) {
+    private addStat(answer: any, won: boolean, productPrice: number) {
         const baseStat = {
             gamesWon: 0,
             gamesPlayed: 0,
@@ -40,7 +40,7 @@ export default class Statistics {
         this.stats[answer.userId] = curStat
     }
 
-    getUserStats(userId: string) {
+    public getUserStats(userId: string) {
         return this.stats[userId]
     }
 }

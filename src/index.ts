@@ -1,4 +1,4 @@
-import express from 'express';
+import express = require('express');
 
 require('dotenv').config();
 const Statistics = require('./statistics');

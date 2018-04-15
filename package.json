@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Bot para o slack para jogar ao preço certo.",
   "scripts": {
-    "test": "NODE_ENV=test mocha",
+    "test": "mocha",
     "start": "nodemon src/index.js"
   },
   "engines": {

@@ -25,6 +25,14 @@ const sendProduct = function (channel, product) {
   }
 }
 
+const sendEphemeral = function (channel, user, text) {
+  web.chat.postEphemeral({
+    channel: channel,
+    user: user,
+    text: text
+  })
+}
+
 // Send initial Hello World message
 if (process.env.NODE_ENV !== 'test') {
   sendMessage('CA69HJNN5', 'Hello World!')
@@ -32,5 +40,6 @@ if (process.env.NODE_ENV !== 'test') {
 
 module.exports = {
   sendMessage,
-  sendProduct
+  sendProduct,
+  sendEphemeral
 }

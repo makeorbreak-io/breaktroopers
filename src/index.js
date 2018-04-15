@@ -7,7 +7,7 @@ const slackEvents = createSlackEventAdapter(process.env.SLACK_VERIFICATION_TOKEN
 const mentionRegex = /.*?<@.*?>.*?/i
 const helpRegex = /help|h|ajuda/i
 const espetaculoRegex = /espetáculo|espetaculo|esbedáculo|esbedaculo/i
-const HELP_STRING = 'Bem vindo ao *\'O SLACK CERTO\'*!! \n > Para jogar com o mítico Mernando Fendes mencione o bot utilizando o simbolo \'@\' seguido da mensagem \'espetáculo\' \n > O Mernando Fendes irá mostrar um producto ao qual os participantes devem-se juntar enviando apenas uma mensagem no channel com o valor que acham que o producto vale. \n > Ganha aquele que ficar mais perto do valor *sem o ultrapassar*. Espetáááááculo! \n > As _triggers words_ disponíveis são: espetáculo, qual, alheira.'
+const HELP_STRING = 'Bem vindo ao *\'O SLACK CERTO\'*!! \n > Para jogar com o mítico Mernando Fendes mencione o bot utilizando o simbolo \'@\' seguido da mensagem \'espetáculo\' \n > O Mernando Fendes irá mostrar um producto ao qual os participantes devem-se juntar enviando apenas uma mensagem no channel com o valor que acham que o producto vale. \n > Ganha aquele que ficar mais perto do valor *sem o ultrapassar*. Espetáááááculo! \n > As _triggers words_ disponíveis são: espetáculo, qual, alheira, stats.'
 const port = process.env.PORT || 3000
 const message = require('./message')
 
@@ -65,7 +65,12 @@ slackEvents.on('app_mention', (event) => {
   }
 
   if (text.includes('alheira')) {
-    message.sendMessage(event.channel, `Uma alheira?! Eheheheh <@${event.user}>`)
+    message.sendMessage(event.channel, `Esbedáculooooo <@${event.user}>`)
+  }
+
+  if (text.includes('stats')) {
+    // TODO adicionar as stats do user
+    message.sendEphemeral(event.channel, event.user, 'Sneaky olá.')
   }
 
   if (text.match(helpRegex)) {
@@ -103,10 +108,10 @@ const onGameFinished = function (game) {
 
   switch (status) {
     case GameFinishStatus.WINNER:
-      message.sendMessage(channelId, `E o preço deste produto éééé: ${price.toFixed(2)}€! Parabéns <@${winner}>! Ganhaste! Até a Lenka ficou entusiasmada!`)
+      message.sendMessage(channelId, `E o preço deste produto éééé: ${price.toFixed(2)}€! Parabéns <@${winner}>! Ganhaste!`)
       break
     case GameFinishStatus.DRAW:
-      message.sendMessage(channelId, `O preço deste produto é: ${price.toFixed(2)}€, nobody won :sob:.`)
+      message.sendMessage(channelId, `O preço deste produto é: ${price.toFixed(2)}€, ninguem ganhou :sob:.`)
       break
     case GameFinishStatus.NOT_ENOUGH_PLAYERS:
       message.sendMessage(channelId, 'O jogo acabou sem jogadores suficientes.')

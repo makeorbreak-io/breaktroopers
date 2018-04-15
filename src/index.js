@@ -99,6 +99,8 @@ app.listen(port, () => {
 })
 
 const onGameFinished = function (game) {
+  const playAgainMessage = '\nPara jogar novamente, mencione o bot utilizando o simbolo \'@\' seguido da mensagem \'espetáculo\' '
+
   const channelId = game.getChannelId()
   const status = game.getFinishStatus()
   const winner = game.getWinner()
@@ -108,13 +110,13 @@ const onGameFinished = function (game) {
 
   switch (status) {
     case GameFinishStatus.WINNER:
-      message.sendMessage(channelId, `E o preço deste produto éééé: ${price.toFixed(2)}€! Parabéns <@${winner}>! Ganhaste!`)
+      message.sendMessage(channelId, `E o preço deste produto éééé: ${price.toFixed(2)}€! Parabéns <@${winner}>! Ganhaste!${playAgainMessage}`)
       break
     case GameFinishStatus.DRAW:
-      message.sendMessage(channelId, `O preço deste produto é: ${price.toFixed(2)}€, ninguem ganhou :sob:.`)
+      message.sendMessage(channelId, `O preço deste produto é: ${price.toFixed(2)}€, ninguem ganhou :sob:.${playAgainMessage}`)
       break
     case GameFinishStatus.NOT_ENOUGH_PLAYERS:
-      message.sendMessage(channelId, 'O jogo acabou sem jogadores suficientes.')
+      message.sendMessage(channelId, `O jogo acabou sem jogadores suficientes.${playAgainMessage}`)
       break
   }
 }

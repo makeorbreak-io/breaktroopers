@@ -1,7 +1,6 @@
 const getRandomProduct = require('./randomproduct')
 const {sendMessage, sendProduct, sendEphemeral, notify} = require('./message')
 
-const MAX_PLAYERS = 3
 const NOTIFICATION_TIMEOUTS =
   process.env.NODE_ENV === 'test'
     ? []
@@ -53,10 +52,6 @@ class Game {
 
     if (Object.values(this.answers).filter(p => p === price).length === 0) {
       this.answers[userId] = price
-    }
-
-    if (Object.keys(this.answers).length >= MAX_PLAYERS) {
-      this.finish()
     }
   }
 

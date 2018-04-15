@@ -28,15 +28,12 @@ describe('Game', function () {
 
   describe('logic', function () {
     it('should call \'onGameFinished\' after GAME_TIMEOUT', async function () {
-      const onGameFinished = () => {
-      }
-
-      const game = new Game('fake', onGameFinished)
+      const game = new Game()
       await game.start()
 
       this.timeout(GAME_TIMEOUT * TIMEOUT_THRESHOLD)
 
-      return onGameFinished
+      return game.onGameFinished
     })
 
     it('should have \'finishStatus\' equal to \'NOT_ENOUGH_PLAYERS\' if no one joins', async function () {

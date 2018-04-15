@@ -82,19 +82,11 @@ class Game {
     let answersBelowPrice = Object.entries(this.answers).filter(p => p[1] < this.product.price)
     let noAnswer = [null, 0]
 
-    console.log(answersBelowPrice)
-    let bestAnswer = Object.entries(answersBelowPrice).reduce((prev, curr) => {
-      console.log(prev[1])
-      console.log(curr[1][1])
-      console.log(curr[1][1] > prev[1])
-      return curr[1][1] > prev[1] ? curr[1] : prev
-    }, noAnswer)
-    console.log(bestAnswer)
+    let bestAnswer = Object.entries(answersBelowPrice).reduce((prev, curr) => curr[1][1] > prev[1] ? curr[1] : prev, noAnswer)
 
     let gameFinishStatus = GameFinishStatus.DRAW
 
     if (bestAnswer !== noAnswer) {
-      // ['1', [userId, price]]
       this.winner = bestAnswer[0]
       gameFinishStatus = GameFinishStatus.WINNER
     }

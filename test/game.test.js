@@ -1,4 +1,5 @@
-/* eslint-disable no-new */
+process.env.NODE_ENV = 'test'
+
 const assert = require('assert')
 const game = require('../src/game')
 const Game = game.Game
@@ -51,7 +52,7 @@ describe('Game', function () {
       return onGameFinished
     })
 
-    it('should report correct winner when one exists', async function () {
+    it('should report correct winner when only two exist', async function () {
       const game = new Game()
       await game.start()
 

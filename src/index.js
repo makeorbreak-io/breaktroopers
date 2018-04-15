@@ -33,6 +33,11 @@ app.post('/', (req, res) => {
   }
 })
 
+app.get('/oauth/', (req, res) => {
+  if (req.query.code) { message.oauthAccess(req.query.code) }
+  res.send('')
+})
+
 // Mount the event handler on a route
 app.use('/slack/events', slackEvents.expressMiddleware())
 

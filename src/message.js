@@ -1,7 +1,7 @@
 require('dotenv').config()
 
 const {WebClient} = require('@slack/client')
-const web = new WebClient(process.env.SLACK_BOT_TOKEN)
+const web = new WebClient()
 
 const sendMessage = function (channel, text) {
   web.chat.postMessage({
@@ -12,6 +12,7 @@ const sendMessage = function (channel, text) {
 
 const sendProduct = function (channel, product) {
   const message = {
+    token: process.env.SLACK_BOT_TOKEN,
     channel: channel,
     text: 'Qual o preço deste magnífico produto?',
     attachments: [{
@@ -27,9 +28,18 @@ const sendProduct = function (channel, product) {
 
 const sendEphemeral = function (channel, user, text) {
   web.chat.postEphemeral({
+    token: process.env.SLACK_BOT_TOKEN,
     channel: channel,
     user: user,
     text: text
+  })
+}
+
+const oauthAccess = function (code) {
+  web.oauth.access({client_id: process.env.CLIENT_ID, client_secret: process.env.CLIENT_SECRET, code: code}).then((res) => { 
+    process.env.SLACK_BOT_TOKEN = res.bot.bot_access_token
+    console.log(res)
+    console.log(res.access_token)
   })
 }
 
@@ -41,5 +51,6 @@ if (process.env.NODE_ENV !== 'test') {
 module.exports = {
   sendMessage,
   sendProduct,
-  sendEphemeral
+  sendEphemeral,
+  oauthAccess
 }

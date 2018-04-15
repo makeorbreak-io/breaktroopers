@@ -21,9 +21,6 @@ const sendProduct = function (channel: string, product: any) {
             text: product.description
         }]
     })
-}
+};
 
-export {
-    sendMessage,
-    sendProduct
-}
+export {sendMessage}

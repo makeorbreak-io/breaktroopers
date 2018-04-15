@@ -32,7 +32,7 @@ async function getRandomProductPage () {
   try {
     const randQuery = Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 2)
     const response = await axios.post('', buildRequestBody(randQuery))
-    return response.data.results[0].hits
+    return response.data.results[0].hits[0]
   } catch (e) {
     console.error(e)
   }
@@ -42,16 +42,6 @@ function getRandomProduct () {
   if (process.env.MOCK_PRODUCTS) {
     return mockProduct
   }
-
-//  products.itemSearch({})
-//    .then(results => {
-//      console.log(results)
-//    }).catch(err => {
-//    console.error(err)
-//    for (let error of err.Error) {
-//      console.error(error)
-//    }
-//  })
 }
 
 module.exports = {getRandomProduct, getRandomProductPage}

@@ -1,7 +1,8 @@
 const getRandomProductPage = require('./randomproduct')
+const message = require('./message')
 
-const MAX_PLAYERS = 4
-const GAME_TIMEOUT = 60 * 1000 // in ms
+const MAX_PLAYERS = 3
+const GAME_TIMEOUT = 30 * 1000 // in ms
 
 const GameState = Object.freeze({
   STARTED: 0,
@@ -26,24 +27,20 @@ class Game {
 
   async startGame () {
     this.product = await getRandomProductPage.getRandomProductPage()
-    console.log(this.product)
-    setTimeout(this.finish, GAME_TIMEOUT)
-  }
-
-  numAnswers () {
-    return Object.keys(this.answers).length
+    this.price = this.product.price.EUR.default
+    message.sendProduct(this.channelId, this.product)
+    this.timeOut = setTimeout(this.finish.bind(this), GAME_TIMEOUT)
   }
 
   answer (userId, price) {
     // If the price is unique, then consider the answer. Otherwise, discard it.
-    if (this.answers.filter(answer => answer.price === price).length === 0) {
-      this.answers[userId] = {
-        price,
-        userId
-      }
+    if (this.answers[userId]) { return }
+
+    if (Object.values(this.answers).filter(p => p === price).length === 0) {
+      this.answers[userId] = price
     }
 
-    if (this.numAnswers() > MAX_PLAYERS) {
+    if (Object.keys(this.answers).length >= MAX_PLAYERS) {
       this.finish()
     }
   }
@@ -56,29 +53,44 @@ class Game {
     return this.state
   }
 
-  finish () {
+  handleMessage (userId, message) {
     if (this.state === GameState.FINISHED) {
       return
     }
 
-    if (this.numAnswers() < 2) {
-      this.onGameFinished(this.channelId, GameFinishStatus.NOT_ENOUGH_PLAYERS, this.winner, this.product.price)
+    const value = parseFloat(message.replace(',', '.'))
+
+    if (value && value > 0) {
+      this.answer(userId, value)
+    }
+  }
+
+  finish () {
+    clearTimeout(this.timeOut)
+
+    if (this.state === GameState.FINISHED) {
       return
     }
 
-    let answersBelowPrice = this.answers.filter(answer => answer.price < this.product.price)
-    let noAnswer = {price: 0}
+    this.state = GameState.FINISHED
 
-    let bestAnswer = answersBelowPrice.entries().reduce((prev, curr) => prev.price > curr.price ? prev : curr, noAnswer)
-
-    let gameFinishStatus = GameFinishStatus.WINNER
-
-    if (bestAnswer !== noAnswer) {
-      this.winner = bestAnswer.userId
-      gameFinishStatus = GameFinishStatus.DRAW
+    if (Object.keys(this.answers).length < 2) {
+      this.onGameFinished(this.channelId, GameFinishStatus.NOT_ENOUGH_PLAYERS, this.winner, this.price)
+      return
     }
 
-    this.state = GameState.FINISHED
+    let answersBelowPrice = Object.entries(this.answers).filter(p => p[1] < this.price)
+    let noAnswer = {price: 0}
+
+    let bestAnswer = Object.entries(answersBelowPrice).reduce((prev, curr) => prev[1] < curr[1] ? prev : curr, noAnswer)
+
+    let gameFinishStatus = GameFinishStatus.DRAW
+
+    if (bestAnswer !== noAnswer) {
+      // ['1', [userId, price]]
+      this.winner = bestAnswer[1][0]
+      gameFinishStatus = GameFinishStatus.WINNER
+    }
 
     this.onGameFinished(this.channelId, gameFinishStatus, this.winner, this.product.price)
     this.stats.addGame(this)
@@ -95,6 +107,6 @@ class Game {
 
 module.exports = {
   Game,
-  GameState
+  GameState,
+  GameFinishStatus
 }
-

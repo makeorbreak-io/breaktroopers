@@ -11,7 +11,7 @@ const message = require('./message')
 // Initialize an Express application
 const express = require('express')
 const bodyParser = require('body-parser')
-const {Game, GameState} = require('./logic')
+const { Game, GameState, GameFinishStatus } = require('./logic')
 
 const app = express()
 
@@ -43,9 +43,14 @@ slackEvents.on('message', (event) => {
     return
   }
 
-  console.log(`Received a message event: user ${event.user} in channel ${event.channel} says ${event.text}`)
-  console.log('%o', event)
-  message.sendMessage(event.channel, `You sent: ${event.text}`)
+  // Passing message to the Game object
+  if (channelToGame[event.channel]) {
+    channelToGame[event.channel].handleMessage(event.user, event.text)
+  }
+
+  // console.log(`Received a message event: user ${event.user} in channel ${event.channel} says ${event.text}`)
+  // console.log('%o', event)
+  // message.sendMessage(event.channel, `You sent: ${event.text}`)
 })
 
 // Handle event triggered on @Bot_name
@@ -87,9 +92,15 @@ app.listen(port, () => {
 })
 
 const onGameFinished = function (channelID, status, winner, price) {
-  if (winner) {
-    message.sendMessage(channelID, `The price is ${price}! Congrulations <@${winner}>! You won!`)
-  } else {
-    message.sendMessage(channelID, `The price is ${price}, nobody won :(.`)
+  switch (status) {
+    case GameFinishStatus.WINNER:
+      message.sendMessage(channelID, `The price is ${price}! Congrulations <@${winner}>! You won!`)
+      break
+    case GameFinishStatus.DRAW:
+      message.sendMessage(channelID, `The price is ${price}, nobody won :(.`)
+      break
+    case GameFinishStatus.NOT_ENOUGH_PLAYERS:
+      message.sendMessage(channelID, 'Game ended! Not enough players')
+      break
   }
 }

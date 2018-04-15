@@ -5,16 +5,16 @@ const {WebClient} =
     ? require('./mock-slack-client')
     : require('@slack/client')
 
-let web = new WebClient()
+let webClients = {}
 
-const sendMessage = function (channel, text) {
-  web.chat.postMessage({
+const sendMessage = function (teamId, channel, text) {
+  webClients[teamId].chat.postMessage({
     channel: channel,
     text: text
   })
 }
 
-const sendProduct = function (channel, product, gameTimeout) {
+const sendProduct = function (teamId, channel, product, gameTimeout) {
   const message = {
     token: process.env.SLACK_BOT_TOKEN,
     channel: channel,
@@ -25,11 +25,11 @@ const sendProduct = function (channel, product, gameTimeout) {
     }]
   }
 
-  web.chat.postMessage(message)
+  webClients[teamId].chat.postMessage(message)
 }
 
-const sendEphemeral = function (channel, user, text) {
-  web.chat.postEphemeral({
+const sendEphemeral = function (teamId, channel, user, text) {
+  webClients[teamId].chat.postEphemeral({
     token: process.env.SLACK_BOT_TOKEN,
     channel: channel,
     user: user,
@@ -38,21 +38,25 @@ const sendEphemeral = function (channel, user, text) {
 }
 
 const oauthAccess = function (code) {
-  web.oauth.access({
+  new WebClient().oauth.access({
     client_id: process.env.CLIENT_ID,
     client_secret: process.env.CLIENT_SECRET,
     code: code
   }).then((res) => {
     const botAccessToken = res.bot.bot_access_token
+    const teamId = res.team_id
+
+    webClients[teamId] = new WebClient(botAccessToken)
+    console.log('Created webclient')
+
     process.env.SLACK_BOT_TOKEN = botAccessToken
-    web = new WebClient(botAccessToken)
   })
 }
 
-const notify = function (channelId, timeLeft) {
+const notify = function (teamId, channelId, timeLeft) {
   const message = `Faltam ${formatTime(timeLeft)} para o final da ronda de palpites!`
 
-  sendMessage(channelId, message)
+  sendMessage(teamId, channelId, message)
 }
 
 const formatTime = function (time) {

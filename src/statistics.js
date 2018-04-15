@@ -6,7 +6,9 @@ module.exports = class Statistics {
   addGame (game) {
     const answers = game.getAnswers()
 
-    if (!answers) { return }
+    if (!answers) {
+      return
+    }
 
     for (let userId in answers) {
       const isWinner = game.getWinner() === userId

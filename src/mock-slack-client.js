@@ -12,5 +12,5 @@ class WebClient {
 }
 
 module.exports = {
-  WebClient: WebClient
+  WebClient
 }

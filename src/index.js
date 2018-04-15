@@ -19,9 +19,9 @@ const {Game, GameState, GameFinishStatus} = require('./game')
 const app = express()
 
 // Map for games associated with channels
-const channelToGame = {}
+const games = {}
 
-const stats = new Statistics()
+const stats = {}
 
 // You must use a body parser for JSON before mounting the adapter
 app.use(bodyParser.json())
@@ -37,16 +37,18 @@ app.get('/oauth/', (req, res) => {
   if (req.query.code) {
     message.oauthAccess(req.query.code)
   }
-  res.send('')
+  res.send('Ok')
 })
 
+const addTeamId = (req) => {
+  req.body.event.teamId = req.body.team_id
+}
+
 // Mount the event handler on a route
-app.use('/slack/events', slackEvents.expressMiddleware())
+app.use('/slack/events', addTeamId, slackEvents.expressMiddleware())
 
 // Handle event triggered on messages
 slackEvents.on('message', (event) => {
-  console.log(event)
-
   if (event.bot_id || event.subtype) {
     return
   }
@@ -55,9 +57,13 @@ slackEvents.on('message', (event) => {
     return
   }
 
+  if (!games[event.teamId]) {
+    games[event.teamId] = {}
+  }
+
   // Passing message to the Game object
-  if (channelToGame[event.channel]) {
-    channelToGame[event.channel].handleMessage(event.user, event.text)
+  if (games[event.teamId][event.channel]) {
+    games[event.teamId][event.channel].handleMessage(event.user, event.text)
   }
 })
 
@@ -66,11 +72,11 @@ slackEvents.on('app_mention', (event) => {
   let text = event.text.toLowerCase()
 
   if (text.includes('qual')) {
-    message.sendMessage(event.channel, 'o preço desta montra final é!!!!!!')
+    message.sendMessage(event.teamId, event.channel, 'o preço desta montra final é!!!!!!')
   }
 
   if (text.includes('alheira')) {
-    message.sendMessage(event.channel, `Esbedáculooooo <@${event.user}>`)
+    message.sendMessage(event.teamId, event.channel, `Esbedáculooooo <@${event.user}>`)
   }
 
   if (text.includes('stats')) {
@@ -78,19 +84,23 @@ slackEvents.on('app_mention', (event) => {
   }
 
   if (text.match(helpRegex)) {
-    message.sendMessage(event.channel, HELP_STRING)
+    message.sendMessage(event.teamId, event.channel, HELP_STRING)
+  }
+
+  if (!games[event.teamId]) {
+    games[event.teamId] = {}
   }
 
   if (text.match(espetaculoRegex)) {
-    if (channelToGame[event.channel]) {
-      if (channelToGame[event.channel].getState() !== GameState.FINISHED) {
-        message.sendMessage(event.channel, 'Já está um jogo a decorrer.')
+    if (games[event.teamId][event.channel]) {
+      if (games[event.teamId][event.channel].getState() !== GameState.FINISHED) {
+        message.sendMessage(event.teamId, event.channel, 'Já está um jogo a decorrer.')
         return
       }
     }
     // start game
-    const game = new Game(event.channel, onGameFinished)
-    channelToGame[event.channel] = game
+    const game = new Game(event.teamId, event.channel, onGameFinished)
+    games[event.teamId][event.channel] = game
     game.start()
   }
 })
@@ -109,28 +119,38 @@ const onGameFinished = function (game) {
   const status = game.getFinishStatus()
   const winner = game.getWinner()
   const price = game.getProduct().price
+  const teamId = game.getTeamId()
 
-  stats.addGame(game)
+  if (!stats[teamId]) {
+    stats[teamId] = new Statistics()
+  }
+
+  stats[teamId].addGame(game)
 
   switch (status) {
     case GameFinishStatus.WINNER:
-      message.sendMessage(channelId, `E o preço deste produto éééé: ${price.toFixed(2)}€! Parabéns <@${winner}>! Ganhaste!${playAgainMessage}`)
+      message.sendMessage(teamId, channelId, `E o preço deste produto éééé: ${price.toFixed(2)}€! Parabéns <@${winner}>! Ganhaste!${playAgainMessage}`)
       break
     case GameFinishStatus.DRAW:
-      message.sendMessage(channelId, `O preço deste produto é: ${price.toFixed(2)}€, ninguem ganhou :sob:.${playAgainMessage}`)
+      message.sendMessage(teamId, channelId, `O preço deste produto é: ${price.toFixed(2)}€, ninguem ganhou :sob:.${playAgainMessage}`)
       break
     case GameFinishStatus.NOT_ENOUGH_PLAYERS:
-      message.sendMessage(channelId, `O jogo acabou sem jogadores suficientes.${playAgainMessage}`)
+      message.sendMessage(teamId, channelId, `O jogo acabou sem jogadores suficientes.${playAgainMessage}`)
       break
   }
 }
 
-const handleStats = function (event) {
-  const userStats = stats.getUserStats(event.user)
-  if (userStats) {
-    const min = (userStats.minimumOffset === Number.POSITIVE_INFINITY) ? 'N/A' : userStats.minimumOffset
-    message.sendEphemeral(event.channel, event.user, `<@${event.user}>:\n > Jogos Ganhos: ${userStats.gamesWon}\n > Jogos Totais: ${userStats.gamesPlayed}\n > Preço Certo: ${userStats.exactPriceMatches}\n > Diferença Minima: ${min}`)
+const handleStats = function (teamId, event) {
+  if (stats[teamId]) {
+    const userStats = stats[teamId].getUserStats(event.user)
+
+    if (userStats) {
+      const min = (userStats.minimumOffset === Number.POSITIVE_INFINITY) ? 'N/A' : userStats.minimumOffset
+      message.sendEphemeral(teamId, event.channel, event.user, `<@${event.user}>:\n > Jogos Ganhos: ${userStats.gamesWon}\n > Jogos Totais: ${userStats.gamesPlayed}\n > Preço Certo: ${userStats.exactPriceMatches}\n > Diferença Minima: ${min}`)
+    } else {
+      message.sendEphemeral(teamId, event.channel, event.user, `<@${event.user}> ainda não tens estatisticas.`)
+    }
   } else {
-    message.sendEphemeral(event.channel, event.user, `<@${event.user}> ainda não tens estatisticas.`)
+    message.sendEphemeral(teamId, event.channel, event.user, `<@${event.user}> ainda não tens estatisticas.`)
   }
 }

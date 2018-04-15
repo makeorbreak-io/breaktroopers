@@ -1,4 +1,4 @@
-const getRandomProductPage = require('./randomproduct')
+const getRandomProduct = require('./randomproduct')
 const message = require('./message')
 
 const MAX_PLAYERS = 3
@@ -26,8 +26,7 @@ class Game {
   }
 
   async startGame () {
-    this.product = await getRandomProductPage.getRandomProductPage()
-    this.price = this.product.price.EUR.default
+    this.product = await getRandomProduct()
     message.sendProduct(this.channelId, this.product)
     this.timeOut = setTimeout(this.finish.bind(this), GAME_TIMEOUT)
   }
@@ -75,20 +74,28 @@ class Game {
     this.state = GameState.FINISHED
 
     if (Object.keys(this.answers).length < 2) {
-      this.onGameFinished(this.channelId, GameFinishStatus.NOT_ENOUGH_PLAYERS, this.winner, this.price)
+      this.onGameFinished(this.channelId, GameFinishStatus.NOT_ENOUGH_PLAYERS, this.winner, this.product.price)
       return
     }
 
-    let answersBelowPrice = Object.entries(this.answers).filter(p => p[1] < this.price)
-    let noAnswer = {price: 0}
+    console.log(this.answers)
+    let answersBelowPrice = Object.entries(this.answers).filter(p => p[1] < this.product.price)
+    let noAnswer = [null, 0]
 
-    let bestAnswer = Object.entries(answersBelowPrice).reduce((prev, curr) => prev[1] < curr[1] ? prev : curr, noAnswer)
+    console.log(answersBelowPrice)
+    let bestAnswer = Object.entries(answersBelowPrice).reduce((prev, curr) => {
+      console.log(prev[1])
+      console.log(curr[1][1])
+      console.log(curr[1][1] > prev[1])
+      return curr[1][1] > prev[1] ? curr[1] : prev
+    }, noAnswer)
+    console.log(bestAnswer)
 
     let gameFinishStatus = GameFinishStatus.DRAW
 
     if (bestAnswer !== noAnswer) {
       // ['1', [userId, price]]
-      this.winner = bestAnswer[1][0]
+      this.winner = bestAnswer[0]
       gameFinishStatus = GameFinishStatus.WINNER
     }
 

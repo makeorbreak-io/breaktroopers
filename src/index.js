@@ -11,7 +11,7 @@ const message = require('./message')
 // Initialize an Express application
 const express = require('express')
 const bodyParser = require('body-parser')
-const { Game, GameState, GameFinishStatus } = require('./logic')
+const {Game, GameState, GameFinishStatus} = require('./logic')
 
 const app = express()
 
@@ -66,7 +66,7 @@ slackEvents.on('app_mention', (event) => {
   }
 
   if (text.includes('help')) {
-    message.sendMessage(event.channel, "Bem vindo ao slack certo \n Para jogar com o grande Mernando Fendes mencione o bot seguido da mensagem 'espetáculo' \n O Mernando Fendes irá mostrar um producto ao qual os participantes devem-se juntar enviando apenas uma mensagem no channel com o valor que acham que o producto vale \n Quando todos os participantes do channel tiverem enviado o seu palpite ou passado o tempo de máximo, o vencedor é anunciado. Espetáááááculo!")
+    message.sendMessage(event.channel, 'Bem vindo ao slack certo \n Para jogar com o grande Mernando Fendes mencione o bot seguido da mensagem \'espetáculo\' \n O Mernando Fendes irá mostrar um producto ao qual os participantes devem-se juntar enviando apenas uma mensagem no channel com o valor que acham que o producto vale \n Quando todos os participantes do channel tiverem enviado o seu palpite ou passado o tempo de máximo, o vencedor é anunciado. Espetáááááculo!')
   }
 
   if (text.includes('espetáculo')) {
@@ -92,10 +92,10 @@ app.listen(port, () => {
 const onGameFinished = function (channelID, status, winner, price) {
   switch (status) {
     case GameFinishStatus.WINNER:
-      message.sendMessage(channelID, `The price is ${price}! Congrulations <@${winner}>! You won!`)
+      message.sendMessage(channelID, `The price is ${price.toFixed(2)}€! Congrulations <@${winner}>! You won!`)
       break
     case GameFinishStatus.DRAW:
-      message.sendMessage(channelID, `The price is ${price}, nobody won :(.`)
+      message.sendMessage(channelID, `The price is ${price.toFixed(2)}€, nobody won :(.`)
       break
     case GameFinishStatus.NOT_ENOUGH_PLAYERS:
       message.sendMessage(channelID, 'Game ended! Not enough players')

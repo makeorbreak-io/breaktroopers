@@ -6,11 +6,11 @@ module.exports = class Statistics {
   addGame (game) {
     const answers = game.getAnswers()
 
-    for (let answer of answers) {
-      const isWinner = game.getWinner() === answer.userId
+    for (let userId in answers) {
+      const isWinner = game.getWinner() === userId
       const productPrice = game.getProduct().price
 
-      this.addStat(answer, isWinner, productPrice)
+      this.addStat(answers[userId], isWinner, productPrice)
     }
   }
 

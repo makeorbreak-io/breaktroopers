@@ -16,7 +16,7 @@ const sendProduct = function (channel, product) {
     text: 'Qual o preço deste produto?',
     attachments: [{
       title: product.name,
-      image_url: `https:${product.image_url}`
+      image_url: `https:${product.imageUrl}`
     }]
   })
 }

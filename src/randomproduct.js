@@ -9,14 +9,6 @@ const axios = Axios.create({
   }
 })
 
-const mockProduct = {
-  title: 'Low Profile Special Cotton Mesh Cap-Black W40S62B',
-  imageUrl: 'https://images-na.ssl-images-amazon.com/images/I/61WvsfC3EIL._UX522_.jpg',
-  summary: '- Cotton\n- Black Low Profile Special Cotton Mesh Cap',
-  description: 'Low profile unstructured Herringbone cotton twill/mesh cap with panels and eyelets, contrasting stitches and under bill, a frayed bill, and self-fabric strap with velcro adjustable. Available in many colors. One size fits most. ',
-  price: 6.46
-}
-
 function buildRequestBody (query) {
   return {
     requests: [
@@ -28,20 +20,33 @@ function buildRequestBody (query) {
   }
 }
 
-async function getRandomProductPage () {
+function formatProduct (product) {
+  return {
+    name: product.name,
+    price: product.price.EUR.default,
+    imageUrl: product.image_url
+  }
+}
+
+function isProductValid (product) {
+  return product && product.hasOwnProperty('price') && product.hasOwnProperty('name') && product.hasOwnProperty('image_url')
+}
+
+async function getRandomProduct () {
   try {
     const randQuery = Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 2)
     const response = await axios.post('', buildRequestBody(randQuery))
-    return response.data.results[0].hits[0]
+
+    let product = response.data.results[0].hits[0]
+
+    if (!isProductValid(product)) {
+      return getRandomProduct()
+    }
+
+    return formatProduct(response.data.results[0].hits[0])
   } catch (e) {
     console.error(e)
   }
 }
 
-function getRandomProduct () {
-  if (process.env.MOCK_PRODUCTS) {
-    return mockProduct
-  }
-}
-
-module.exports = {getRandomProduct, getRandomProductPage}
+module.exports = getRandomProduct

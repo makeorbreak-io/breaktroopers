@@ -47,17 +47,21 @@ class Game {
   answer (userId, price) {
     // If the price is unique, then consider the answer. Otherwise, discard it.
     if (this.answers[userId]) {
+      sendEphemeral(this.channelId, userId, 'Já tinha enviado um palpite. Espere pelo próximo jogo para enviar um novo!')
       return
     }
 
     if (Object.values(this.answers).filter(p => p === price).length === 0) {
       this.answers[userId] = price
+      sendEphemeral(this.channelId, userId, `O seu palpite de ${price.toFixed(2)}€ foi registado. Espere até ao final da ronda pelos resultados!`)
+    } else {
+      sendEphemeral(this.channelId, userId, `O seu palpite de ${price.toFixed(2)}€ já tinha sido dado por outro jogador. Escolha um valor diferente.`)
     }
   }
 
   handleMessage (userId, message) {
     if (this.state === GameState.FINISHED) {
-      sendMessage(this.channelId, userId, 'O jogo já acabou! Para começar um novo, mencione o bot utilizando o simbolo \'@\' seguido da mensagem \'espetáculo\'')
+      sendMessage(this.channelId, 'O jogo já acabou! Para começar um novo, mencione o bot utilizando o simbolo \'@\' seguido da mensagem \'espetáculo\'')
       return
     }
 
@@ -65,7 +69,6 @@ class Game {
 
     if (value && value > 0) {
       this.answer(userId, value)
-      sendEphemeral(this.channelId, userId, `O seu palpite de ${value.toFixed(2)}€ foi registado. Espere até ao final da ronda pelos resultados!`)
     } else {
       sendEphemeral(this.channelId, userId, 'Enviou um palpite errado. Os palpites devem ser números decimais. Ex.: \'1\', \'5.7\', \'1,3\'')
     }
@@ -85,7 +88,7 @@ class Game {
       return
     }
 
-    let answersBelowPrice = Object.entries(this.answers).filter(p => p[1] < this.product.price)
+    let answersBelowPrice = Object.entries(this.answers).filter(p => p[1] <= this.product.price)
     let noAnswer = [null, 0]
 
     let bestAnswer = Object.entries(answersBelowPrice).reduce((prev, curr) => curr[1][1] > prev[1] ? curr[1] : prev, noAnswer)

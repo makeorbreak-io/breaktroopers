@@ -68,6 +68,25 @@ describe('Game', function () {
       assert.strictEqual(game.getFinishStatus(), GameFinishStatus.WINNER)
     })
 
+    it('should report correct winner when only two exist (even if price is exact)', async function () {
+      const game = new Game()
+      await game.start()
+
+      const winnerId = 'winner'
+      const loserId = 'loser'
+
+      const price = game.getProduct().price
+
+      game.handleMessage(winnerId, (price).toString())
+      game.handleMessage(loserId, (price - 1).toString())
+
+      game.finish()
+
+      assert.strictEqual(game.getWinner(), winnerId)
+      assert.strictEqual(game.getState(), GameState.FINISHED)
+      assert.strictEqual(game.getFinishStatus(), GameFinishStatus.WINNER)
+    })
+
     it('should report no winner when there isn\'t any', async function () {
       const game = new Game()
       await game.start()

@@ -5,10 +5,11 @@ const {WebClient} =
     ? require('./mock-slack-client')
     : require('@slack/client')
 
-const web = new WebClient(process.env.SLACK_BOT_TOKEN)
+let web = new WebClient()
 
 const sendMessage = function (channel, text) {
   web.chat.postMessage({
+    token: process.env.SLACK_BOT_TOKEN,
     channel: channel,
     text: text
   })
@@ -16,6 +17,7 @@ const sendMessage = function (channel, text) {
 
 const sendProduct = function (channel, product, gameTimeout) {
   const message = {
+    token: process.env.SLACK_BOT_TOKEN,
     channel: channel,
     text: `Qual o preço deste magnífico produto?\nA ronda de palpites dura ${formatTime(gameTimeout)}.`,
     attachments: [{
@@ -29,9 +31,22 @@ const sendProduct = function (channel, product, gameTimeout) {
 
 const sendEphemeral = function (channel, user, text) {
   web.chat.postEphemeral({
+    token: process.env.SLACK_BOT_TOKEN,
     channel: channel,
     user: user,
     text: text
+  })
+}
+
+const oauthAccess = function (code) {
+  web.oauth.access({
+    client_id: process.env.CLIENT_ID,
+    client_secret: process.env.CLIENT_SECRET,
+    code: code
+  }).then((res) => {
+    const botAccessToken = res.bot.bot_access_token
+    process.env.SLACK_BOT_TOKEN = botAccessToken
+    web = new WebClient(botAccessToken)
   })
 }
 
@@ -65,13 +80,11 @@ const formatTime = function (time) {
   return result.trim()
 }
 
-// Send initial Hello World message
-sendMessage('CA69HJNN5', 'Hello World!')
-
 module.exports = {
   sendMessage,
   sendProduct,
   sendEphemeral,
+  oauthAccess,
   notify,
   formatTime
 }

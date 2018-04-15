@@ -9,6 +9,7 @@ let web = new WebClient()
 
 const sendMessage = function (channel, text) {
   web.chat.postMessage({
+    token: process.env.SLACK_BOT_TOKEN,
     channel: channel,
     text: text
   })

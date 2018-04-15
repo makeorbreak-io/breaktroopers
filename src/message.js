@@ -43,10 +43,9 @@ const oauthAccess = function (code) {
     client_secret: process.env.CLIENT_SECRET,
     code: code
   }).then((res) => {
-    process.env.SLACK_BOT_TOKEN = res.bot.bot_access_token
-    web = new WebClient(res.bot.bot_access_token)
-    console.log(res)
-    console.log(res.access_token)
+    const botAccessToken = res.bot.bot_access_token
+    process.env.SLACK_BOT_TOKEN = botAccessToken
+    web = new WebClient(botAccessToken)
   })
 }
 
@@ -79,9 +78,6 @@ const formatTime = function (time) {
 
   return result.trim()
 }
-
-// Send initial Hello World message
-sendMessage('CA69HJNN5', 'Hello World!')
 
 module.exports = {
   sendMessage,

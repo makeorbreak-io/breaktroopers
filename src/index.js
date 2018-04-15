@@ -7,7 +7,7 @@ const slackEvents = createSlackEventAdapter(process.env.SLACK_VERIFICATION_TOKEN
 const mentionRegex = /.*?<@.*?>.*?/i
 const helpRegex = /help|h|ajuda/i
 const espetaculoRegex = /espetáculo|espetaculo|esbedáculo|esbedaculo/i
-const HELP_STRING = 'Bem vindo ao *\'O SLACK CERTO\'*!! \n > Para jogar com o mítico Mernando Fendes mencione o bot utilizando o simbolo \'@\' seguido da mensagem \'espetáculo\' \n > O Mernando Fendes irá mostrar um producto ao qual os participantes devem-se juntar enviando apenas uma mensagem no channel com o valor que acham que o producto vale. \n > Ganha aquele que ficar mais perto do valor *sem o ultrapassar*. Espetáááááculo! \n > As _triggers words_ disponíveis são: espetáculo, qual, alheira, stats.'
+const HELP_STRING = 'Bem vindo ao *\'O SLACK CERTO\'*!! \n > Para jogar com o mítico Mernando Fendes adiciona o bot a um canal público e menciona-o utilizando o simbolo \'@\' seguido da mensagem \'esbetáculo\' \n > O Mernando Fendes vai mostrar um producto ao qual os participantes devem-se juntar enviando apenas uma mensagem no canal com o valor que acham que o producto vale. \n > Ganha aquele que ficar mais perto do valor *sem o ultrapassar*. _Espetáááááculo_! \n > As _triggers words_ disponíveis são: espetáculo, qual, alheira, stats.'
 const port = process.env.PORT || 3000
 const message = require('./message')
 
@@ -50,10 +50,6 @@ slackEvents.on('message', (event) => {
   if (channelToGame[event.channel]) {
     channelToGame[event.channel].handleMessage(event.user, event.text)
   }
-
-  // console.log(`Received a message event: user ${event.user} in channel ${event.channel} says ${event.text}`)
-  // console.log('%o', event)
-  // message.sendMessage(event.channel, `You sent: ${event.text}`)
 })
 
 // Handle event triggered on @Bot_name
@@ -69,8 +65,7 @@ slackEvents.on('app_mention', (event) => {
   }
 
   if (text.includes('stats')) {
-    // TODO adicionar as stats do user
-    message.sendEphemeral(event.channel, event.user, 'Sneaky olá.')
+    handleStats(event)
   }
 
   if (text.match(helpRegex)) {
@@ -118,5 +113,15 @@ const onGameFinished = function (game) {
     case GameFinishStatus.NOT_ENOUGH_PLAYERS:
       message.sendMessage(channelId, `O jogo acabou sem jogadores suficientes.${playAgainMessage}`)
       break
+  }
+}
+
+const handleStats = function (event) {
+  const userStats = stats.getUserStats(event.user)
+  if (userStats) {
+    const min = (userStats.minimumOffset === Number.POSITIVE_INFINITY) ? 'N/A' : userStats.minimumOffset
+    message.sendEphemeral(event.channel, event.user, `<@${event.user}>:\n > Jogos Ganhos: ${userStats.gamesWon}\n > Jogos Totais: ${userStats.gamesPlayed}\n > Preço Certo: ${userStats.exactPriceMatches}\n > Diferença Minima: ${min}`)
+  } else {
+    message.sendEphemeral(event.channel, event.user, `<@${event.user}> ainda não tens estatisticas.`)
   }
 }

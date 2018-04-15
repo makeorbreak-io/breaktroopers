@@ -13,7 +13,7 @@ const sendMessage = function (channel, text) {
 const sendProduct = function (channel, product) {
   web.chat.postMessage({
     channel: channel,
-    text: 'Qual o preço deste produto?',
+    text: 'Qual o preço deste magnífico produto?',
     attachments: [{
       title: product.name,
       image_url: `https:${product.imageUrl}`

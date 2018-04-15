@@ -23,7 +23,7 @@ function buildRequestBody (query) {
 function formatProduct (product) {
   return {
     name: product.name,
-    price: product.price.EUR.default,
+    price: parseFloat(product.price.EUR.default),
     imageUrl: product.image_url
   }
 }
@@ -33,6 +33,14 @@ function isProductValid (product) {
 }
 
 async function getRandomProduct () {
+  if (process.env.NODE_ENV === 'test') {
+    return {
+      name: 'Fake Name',
+      price: 100,
+      imageUrl: 'http://via.placeholder.com/300'
+    }
+  }
+
   try {
     const randQuery = Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 2)
     const response = await axios.post('', buildRequestBody(randQuery))

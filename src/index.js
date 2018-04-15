@@ -7,7 +7,7 @@ const slackEvents = createSlackEventAdapter(process.env.SLACK_VERIFICATION_TOKEN
 const mentionRegex = /.*?<@.*?>.*?/i
 const helpRegex = /help|h|ajuda/i
 const espetaculoRegex = /espetáculo|espetaculo|esbedáculo|esbedaculo/i
-const HELP_STRING = "Bem vindo ao *'O SLACK CERTO'*!! \n > Para jogar com o mítico Mernando Fendes mencione o bot utilizando o simbolo '@' seguido da mensagem 'espetáculo' \n > O Mernando Fendes irá mostrar um producto ao qual os participantes devem-se juntar enviando apenas uma mensagem no channel com o valor que acham que o producto vale. \n > Ganha aquele que ficar mais perto do valor *sem o ultrapassar*. Espetáááááculo! \n > As _triggers words_ disponíveis são: espetáculo, qual, alheira."
+const HELP_STRING = 'Bem vindo ao *\'O SLACK CERTO\'*!! \n > Para jogar com o mítico Mernando Fendes mencione o bot utilizando o simbolo \'@\' seguido da mensagem \'espetáculo\' \n > O Mernando Fendes irá mostrar um producto ao qual os participantes devem-se juntar enviando apenas uma mensagem no channel com o valor que acham que o producto vale. \n > Ganha aquele que ficar mais perto do valor *sem o ultrapassar*. Espetáááááculo! \n > As _triggers words_ disponíveis são: espetáculo, qual, alheira.'
 const port = process.env.PORT || 3000
 const message = require('./message')
 
@@ -80,7 +80,9 @@ slackEvents.on('app_mention', (event) => {
       }
     }
     // start game
-    channelToGame[event.channel] = new Game(event.channel, onGameFinished, stats)
+    const game = new Game(event.channel, onGameFinished)
+    channelToGame[event.channel] = game
+    game.start()
   }
 })
 
@@ -91,16 +93,23 @@ app.listen(port, () => {
   console.log(`App listening on port ${port}!`)
 })
 
-const onGameFinished = function (channelID, status, winner, price) {
+const onGameFinished = function (game) {
+  const channelId = game.getChannelId()
+  const status = game.getFinishStatus()
+  const winner = game.getWinner()
+  const price = game.getProduct().price
+
+  stats.addGame(game)
+
   switch (status) {
     case GameFinishStatus.WINNER:
-      message.sendMessage(channelID, `E o preço deste produto éééé: ${price.toFixed(2)}€! Parabéns <@${winner}>! Ganhaste! Até a Lenka ficou entusiasmada!`)
+      message.sendMessage(channelId, `E o preço deste produto éééé: ${price.toFixed(2)}€! Parabéns <@${winner}>! Ganhaste! Até a Lenka ficou entusiasmada!`)
       break
     case GameFinishStatus.DRAW:
-      message.sendMessage(channelID, `O preço deste produto é: ${price.toFixed(2)}€, nobody won :sob:.`)
+      message.sendMessage(channelId, `O preço deste produto é: ${price.toFixed(2)}€, nobody won :sob:.`)
       break
     case GameFinishStatus.NOT_ENOUGH_PLAYERS:
-      message.sendMessage(channelID, 'O jogo acabou sem jogadores suficientes.')
+      message.sendMessage(channelId, 'O jogo acabou sem jogadores suficientes.')
       break
   }
 }

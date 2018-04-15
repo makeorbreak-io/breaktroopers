@@ -2,7 +2,10 @@ const getRandomProduct = require('./randomproduct')
 const message = require('./message')
 
 const MAX_PLAYERS = 3
-const GAME_TIMEOUT = 30 * 1000 // in ms
+const GAME_TIMEOUT = // in ms
+  process.env.NODE_ENV === 'test'
+    ? 1000
+    : 30 * 1000
 
 const GameState = Object.freeze({
   STARTED: 0,
@@ -16,16 +19,17 @@ const GameFinishStatus = Object.freeze({
 })
 
 class Game {
-  constructor (channelId, onGameFinished, stats) {
-    this.stats = stats
+  constructor (channelId, onGameFinished) {
     this.channelId = channelId
-    this.onGameFinished = onGameFinished
     this.answers = {}
     this.state = GameState.STARTED
-    this.startGame()
+    this.gameFinishStatus = GameFinishStatus.NOT_ENOUGH_PLAYERS
+
+    this.onGameFinished = onGameFinished || function () {
+    }
   }
 
-  async startGame () {
+  async start () {
     this.product = await getRandomProduct()
     message.sendProduct(this.channelId, this.product)
     this.timeOut = setTimeout(this.finish.bind(this), GAME_TIMEOUT)
@@ -33,7 +37,9 @@ class Game {
 
   answer (userId, price) {
     // If the price is unique, then consider the answer. Otherwise, discard it.
-    if (this.answers[userId]) { return }
+    if (this.answers[userId]) {
+      return
+    }
 
     if (Object.values(this.answers).filter(p => p === price).length === 0) {
       this.answers[userId] = price
@@ -42,14 +48,6 @@ class Game {
     if (Object.keys(this.answers).length >= MAX_PLAYERS) {
       this.finish()
     }
-  }
-
-  getProduct () {
-    return this.product
-  }
-
-  getState () {
-    return this.state
   }
 
   handleMessage (userId, message) {
@@ -74,7 +72,7 @@ class Game {
     this.state = GameState.FINISHED
 
     if (Object.keys(this.answers).length < 2) {
-      this.onGameFinished(this.channelId, GameFinishStatus.NOT_ENOUGH_PLAYERS, this.winner, this.product.price)
+      this.onGameFinished(this)
       return
     }
 
@@ -83,15 +81,18 @@ class Game {
 
     let bestAnswer = Object.entries(answersBelowPrice).reduce((prev, curr) => curr[1][1] > prev[1] ? curr[1] : prev, noAnswer)
 
-    let gameFinishStatus = GameFinishStatus.DRAW
+    this.gameFinishStatus = GameFinishStatus.DRAW
 
     if (bestAnswer !== noAnswer) {
       this.winner = bestAnswer[0]
-      gameFinishStatus = GameFinishStatus.WINNER
+      this.gameFinishStatus = GameFinishStatus.WINNER
     }
 
-    this.onGameFinished(this.channelId, gameFinishStatus, this.winner, this.product.price)
-    this.stats.addGame(this)
+    this.onGameFinished(this)
+  }
+
+  getChannelId () {
+    return this.channelId
   }
 
   getWinner () {
@@ -101,10 +102,23 @@ class Game {
   getAnswers () {
     return this.answers
   }
+
+  getProduct () {
+    return this.product
+  }
+
+  getState () {
+    return this.state
+  }
+
+  getFinishStatus () {
+    return this.gameFinishStatus
+  }
 }
 
 module.exports = {
   Game,
   GameState,
-  GameFinishStatus
+  GameFinishStatus,
+  GAME_TIMEOUT
 }

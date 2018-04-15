@@ -65,7 +65,7 @@ slackEvents.on('app_mention', (event) => {
   }
 
   if (text.includes('alheira')) {
-    message.sendMessage(event.channel, `Uma alheira?! Eheheheh <@${event.user}>`)
+    message.sendMessage(event.channel, `Esbedáculooooo <@${event.user}>`)
   }
 
   if (text.includes('stats')) {
@@ -99,10 +99,10 @@ app.listen(port, () => {
 const onGameFinished = function (channelID, status, winner, price) {
   switch (status) {
     case GameFinishStatus.WINNER:
-      message.sendMessage(channelID, `E o preço deste produto éééé: ${price.toFixed(2)}€! Parabéns <@${winner}>! Ganhaste! Até a Lenka ficou entusiasmada!`)
+      message.sendMessage(channelID, `E o preço deste produto éééé: ${price.toFixed(2)}€! Parabéns <@${winner}>! Ganhaste!`)
       break
     case GameFinishStatus.DRAW:
-      message.sendMessage(channelID, `O preço deste produto é: ${price.toFixed(2)}€, nobody won :sob:.`)
+      message.sendMessage(channelID, `O preço deste produto é: ${price.toFixed(2)}€, ninguem ganhou :sob:.`)
       break
     case GameFinishStatus.NOT_ENOUGH_PLAYERS:
       message.sendMessage(channelID, 'O jogo acabou sem jogadores suficientes.')

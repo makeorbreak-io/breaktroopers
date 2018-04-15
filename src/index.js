@@ -60,6 +60,12 @@ slackEvents.on('app_mention', (event) => {
     message.sendMessage(event.channel, `Uma alheira?!? Bambora <@${event.user}>`)
   }
 
+  if (text.includes('help')){
+    message.sendMessage(event.channel,"Bem vindo ao slack certo \n Para jogar com o grande Mernando Fendes mencione o bot seguido da mensagem 'espetáculo' \n O Mernando Fendes irá mostrar um producto ao qual os participantes devem-se juntar enviando apenas uma mensagem no channel com o valor que acham que o producto vale \n Quando todos os participantes do channel tiverem enviado o seu palpite ou passado o tempo de máximo, o vencedor é anunciado. Espetáááááculo!")
+
+  }
+
+
   if (text.includes('espetáculo')) {
     if (channelToGame[event.channel]) {
       if (channelToGame[event.channel].getState() !== GameState.FINISHED) {

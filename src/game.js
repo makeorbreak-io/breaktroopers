@@ -47,11 +47,15 @@ class Game {
   answer (userId, price) {
     // If the price is unique, then consider the answer. Otherwise, discard it.
     if (this.answers[userId]) {
+      sendEphemeral(this.channelId, userId, 'Já tinha enviado um palpite. Espere pelo próximo jogo para enviar um novo!')
       return
     }
 
     if (Object.values(this.answers).filter(p => p === price).length === 0) {
       this.answers[userId] = price
+      sendEphemeral(this.channelId, userId, `O seu palpite de ${price.toFixed(2)}€ foi registado. Espere até ao final da ronda pelos resultados!`)
+    } else {
+      sendEphemeral(this.channelId, userId, `O seu palpite de ${price.toFixed(2)}€ já tinha sido dado por outro jogador. Escolha um valor diferente.`)
     }
   }
 
@@ -65,7 +69,6 @@ class Game {
 
     if (value && value > 0) {
       this.answer(userId, value)
-      sendEphemeral(this.channelId, userId, `O seu palpite de ${value.toFixed(2)}€ foi registado. Espere até ao final da ronda pelos resultados!`)
     } else {
       sendEphemeral(this.channelId, userId, 'Enviou um palpite errado. Os palpites devem ser números decimais. Ex.: \'1\', \'5.7\', \'1,3\'')
     }

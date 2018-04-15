@@ -5,7 +5,7 @@ const {WebClient} =
     ? require('./mock-slack-client')
     : require('@slack/client')
 
-const web = new WebClient()
+let web = new WebClient()
 
 const sendMessage = function (channel, text) {
   web.chat.postMessage({
@@ -44,6 +44,7 @@ const oauthAccess = function (code) {
     code: code
   }).then((res) => {
     process.env.SLACK_BOT_TOKEN = res.bot.bot_access_token
+    web = new WebClient(res.bot.bot_access_token)
     console.log(res)
     console.log(res.access_token)
   })

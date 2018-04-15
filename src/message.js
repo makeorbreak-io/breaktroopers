@@ -21,11 +21,20 @@ const sendProduct = function (channel, product) {
   })
 }
 
+const sendEphemeral = function (channel, user, text) {
+  web.chat.postEphemeral({
+    channel: channel,
+    user: user,
+    text: text
+  })
+}
+
 // Send initial Hello World message
 sendMessage('CA69HJNN5', 'Hello World!')
 // sendProduct('CA69HJNN5', randomProduct.mockProduct)
 
 module.exports = {
   sendMessage,
-  sendProduct
+  sendProduct,
+  sendEphemeral
 }

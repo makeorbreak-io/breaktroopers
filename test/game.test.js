@@ -1,24 +1,25 @@
 process.env.NODE_ENV = 'test'
 
 const assert = require('assert')
-const game = require('../src/game')
-const Game = game.Game
-const GameFinishStatus = game.GameFinishStatus
-const GameState = game.GameState
-const GAME_TIMEOUT = game.GAME_TIMEOUT
+const {Game, GameState, GameFinishStatus, GAME_TIMEOUT} = require('../src/game')
+const Messenger = require('../src/messenger')
+const {WebClient} = require('../src/mock-slack-client')
 
 const TIMEOUT_THRESHOLD = 1.2
 
 describe('Game', function () {
+  const messenger = new Messenger('123')
+  messenger.setWebClient(new WebClient())
+
   it('should have initial configurations set at start', async function () {
     const channelId = 'fake'
-
     const onGameFinished = () => {
     }
 
-    const game = new Game(channelId, onGameFinished)
+    const game = new Game(messenger, channelId, onGameFinished)
     await game.start()
 
+    assert.deepStrictEqual(game.messenger, messenger)
     assert.strictEqual(game.getChannelId(), channelId)
     assert.deepStrictEqual(game.getAnswers(), {})
     assert.strictEqual(game.getState(), GameState.STARTED)
@@ -28,7 +29,7 @@ describe('Game', function () {
 
   describe('logic', function () {
     it('should call \'onGameFinished\' after GAME_TIMEOUT', async function () {
-      const game = new Game()
+      const game = new Game(messenger)
       await game.start()
 
       this.timeout(GAME_TIMEOUT * TIMEOUT_THRESHOLD)
@@ -41,7 +42,7 @@ describe('Game', function () {
         assert.strictEqual(game.getFinishStatus(), GameFinishStatus.NOT_ENOUGH_PLAYERS)
       }
 
-      const game = new Game('fake', onGameFinished)
+      const game = new Game(messenger, 'fake', onGameFinished)
       await game.start()
 
       this.timeout(GAME_TIMEOUT * TIMEOUT_THRESHOLD)
@@ -50,7 +51,7 @@ describe('Game', function () {
     })
 
     it('should report correct winner when only two exist', async function () {
-      const game = new Game()
+      const game = new Game(messenger)
       await game.start()
 
       const winnerId = 'winner'
@@ -69,7 +70,7 @@ describe('Game', function () {
     })
 
     it('should report correct winner when only two exist (even if price is exact)', async function () {
-      const game = new Game()
+      const game = new Game(messenger)
       await game.start()
 
       const winnerId = 'winner'
@@ -88,7 +89,7 @@ describe('Game', function () {
     })
 
     it('should report no winner when there isn\'t any', async function () {
-      const game = new Game()
+      const game = new Game(messenger)
       await game.start()
 
       const overpricedId1 = 'overpriced1'
@@ -107,7 +108,7 @@ describe('Game', function () {
     })
 
     it('should report not enough players when there are less than two', async function () {
-      const game = new Game()
+      const game = new Game(messenger)
       await game.start()
       const lonelyId = 'lonely'
 
@@ -124,7 +125,7 @@ describe('Game', function () {
 
   describe('message handler', function () {
     it('should discard non-positive values as answer', async function () {
-      const game = new Game()
+      const game = new Game(messenger)
       await game.start()
 
       game.handleMessage('fake1', '-3')
@@ -134,7 +135,7 @@ describe('Game', function () {
     })
 
     it('should discard invalid values as answer', async function () {
-      const game = new Game()
+      const game = new Game(messenger)
       await game.start()
 
       game.handleMessage('fake1', '{}')
@@ -145,7 +146,7 @@ describe('Game', function () {
 
     it('should accept integer values as answer', async function () {
       const userId = 'fake'
-      const game = new Game()
+      const game = new Game(messenger)
       await game.start()
 
       game.handleMessage(userId, '3')
@@ -156,7 +157,7 @@ describe('Game', function () {
     it('should accept decimal values as answer', async function () {
       const userId1 = 'fake1'
       const userId2 = 'fake2'
-      const game = new Game()
+      const game = new Game(messenger)
       await game.start()
 
       game.handleMessage(userId1, '5,5')

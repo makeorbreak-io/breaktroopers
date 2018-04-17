@@ -1,27 +1,27 @@
 require('dotenv').config()
-const Statistics = require('./statistics')
+
+const Workspace = require('./workspace')
+const Messenger = require('./messenger')
+const bodyParser = require('body-parser')
+const {GameFinishStatus} = require('./game')
+const {createSlackEventAdapter} = require('@slack/events-api')
+const express = require('express')
 
 // Initialize using verification token from environment variables
-const createSlackEventAdapter = require('@slack/events-api').createSlackEventAdapter
 const slackEvents = createSlackEventAdapter(process.env.SLACK_VERIFICATION_TOKEN)
+const port = process.env.PORT || 3000
+
 const mentionRegex = /.*?<@.*?>.*?/i
 const helpRegex = /help|h|ajuda/i
 const espetaculoRegex = /espetáculo|espetaculo|esbedáculo|esbedaculo/i
 const HELP_STRING = 'Bem vindo ao *\'O SLACK CERTO\'*!! \n > Para jogar com o mítico Mernando Fendes adiciona o bot a um canal público e menciona-o utilizando o simbolo \'@\' seguido da mensagem \'esbetáculo\' \n > O Mernando Fendes vai mostrar um producto ao qual os participantes devem-se juntar enviando apenas uma mensagem no canal com o valor que acham que o producto vale. \n > Ganha aquele que ficar mais perto do valor *sem o ultrapassar*. _Espetáááááculo_! \n > As _triggers words_ disponíveis são: espetáculo, qual, alheira, stats.'
-const port = process.env.PORT || 3000
-const message = require('./message')
 
-// Initialize an Express application
-const express = require('express')
-const bodyParser = require('body-parser')
-const {Game, GameState, GameFinishStatus} = require('./game')
+/**
+ * Map with workspace IDs as keys and the Workspace class as value
+ */
+const workspaces = {}
 
 const app = express()
-
-// Map for games associated with channels
-const games = {}
-
-const stats = {}
 
 // You must use a body parser for JSON before mounting the adapter
 app.use(bodyParser.json())
@@ -33,11 +33,21 @@ app.post('/', (req, res) => {
   }
 })
 
-app.get('/oauth/', (req, res) => {
+app.get('/oauth/', async (req, res) => {
   if (req.query.code) {
-    message.oauthAccess(req.query.code)
+    try {
+      const result = await Messenger.oauthAccess(req.query.code)
+      const webClient = result.webClient
+      const workspaceId = result.workspaceId
+
+      getOrCreateWorkspace(workspaceId).setWebClient(webClient)
+
+      res.send('Ok')
+    } catch (e) {
+      console.error(e)
+      res.status(500).send('Error')
+    }
   }
-  res.send('Ok')
 })
 
 const addTeamId = (req) => {
@@ -57,26 +67,22 @@ slackEvents.on('message', (event) => {
     return
   }
 
-  if (!games[event.teamId]) {
-    games[event.teamId] = {}
-  }
+  const workspace = getOrCreateWorkspace(event.teamId)
 
-  // Passing message to the Game object
-  if (games[event.teamId][event.channel]) {
-    games[event.teamId][event.channel].handleMessage(event.user, event.text)
-  }
+  workspace.handleMessage(event)
 })
 
 // Handle event triggered on @Bot_name
 slackEvents.on('app_mention', (event) => {
+  const workspace = getOrCreateWorkspace(event.teamId)
   let text = event.text.toLowerCase()
 
   if (text.includes('qual')) {
-    message.sendMessage(event.teamId, event.channel, 'o preço desta montra final é!!!!!!')
+    workspace.sendMessage(event.channel, 'o preço desta montra final é!!!!!!')
   }
 
   if (text.includes('alheira')) {
-    message.sendMessage(event.teamId, event.channel, `Esbedáculooooo <@${event.user}>`)
+    workspace.sendMessage(event.channel, `Esbedáculooooo <@${event.user}>`)
   }
 
   if (text.includes('stats')) {
@@ -84,24 +90,15 @@ slackEvents.on('app_mention', (event) => {
   }
 
   if (text.match(helpRegex)) {
-    message.sendMessage(event.teamId, event.channel, HELP_STRING)
-  }
-
-  if (!games[event.teamId]) {
-    games[event.teamId] = {}
+    workspace.sendMessage(event.channel, HELP_STRING)
   }
 
   if (text.match(espetaculoRegex)) {
-    if (games[event.teamId][event.channel]) {
-      if (games[event.teamId][event.channel].getState() !== GameState.FINISHED) {
-        message.sendMessage(event.teamId, event.channel, 'Já está um jogo a decorrer.')
-        return
-      }
+    const error = workspace.startGame(event, onGameFinished)
+
+    if (error) {
+      workspace.sendMessage(event.channel, 'Já está um jogo a decorrer.')
     }
-    // start game
-    const game = new Game(event.teamId, event.channel, onGameFinished)
-    games[event.teamId][event.channel] = game
-    game.start()
   }
 })
 
@@ -112,6 +109,14 @@ app.listen(port, () => {
   console.log(`App listening on port ${port}!`)
 })
 
+function getOrCreateWorkspace (workspaceId) {
+  if (!workspaces.hasOwnProperty(workspaceId)) {
+    workspaces[workspaceId] = new Workspace(workspaceId)
+  }
+
+  return workspaces[workspaceId]
+}
+
 const onGameFinished = function (game) {
   const playAgainMessage = '\nPara jogar novamente, mencione o bot utilizando o simbolo \'@\' seguido da mensagem \'espetáculo\' '
 
@@ -121,36 +126,31 @@ const onGameFinished = function (game) {
   const price = game.getProduct().price
   const teamId = game.getTeamId()
 
-  if (!stats[teamId]) {
-    stats[teamId] = new Statistics()
-  }
+  const workspace = getOrCreateWorkspace(teamId)
 
-  stats[teamId].addGame(game)
+  workspace.addGameToStatistics()
 
   switch (status) {
     case GameFinishStatus.WINNER:
-      message.sendMessage(teamId, channelId, `E o preço deste produto éééé: ${price.toFixed(2)}€! Parabéns <@${winner}>! Ganhaste!${playAgainMessage}`)
+      workspace.sendMessage(channelId, `E o preço deste produto éééé: ${price.toFixed(2)}€! Parabéns <@${winner}>! Ganhaste!${playAgainMessage}`)
       break
     case GameFinishStatus.DRAW:
-      message.sendMessage(teamId, channelId, `O preço deste produto é: ${price.toFixed(2)}€, ninguem ganhou :sob:.${playAgainMessage}`)
+      workspace.sendMessage(channelId, `O preço deste produto é: ${price.toFixed(2)}€, ninguem ganhou :sob:.${playAgainMessage}`)
       break
     case GameFinishStatus.NOT_ENOUGH_PLAYERS:
-      message.sendMessage(teamId, channelId, `O jogo acabou sem jogadores suficientes.${playAgainMessage}`)
+      workspace.sendMessage(channelId, `O jogo acabou sem jogadores suficientes.${playAgainMessage}`)
       break
   }
 }
 
 const handleStats = function (teamId, event) {
-  if (stats[teamId]) {
-    const userStats = stats[teamId].getUserStats(event.user)
+  const workspace = getOrCreateWorkspace(teamId)
+  const userStats = workspace.getUserStats(event.user)
 
-    if (userStats) {
-      const min = (userStats.minimumOffset === Number.POSITIVE_INFINITY) ? 'N/A' : userStats.minimumOffset
-      message.sendEphemeral(teamId, event.channel, event.user, `<@${event.user}>:\n > Jogos Ganhos: ${userStats.gamesWon}\n > Jogos Totais: ${userStats.gamesPlayed}\n > Preço Certo: ${userStats.exactPriceMatches}\n > Diferença Minima: ${min}`)
-    } else {
-      message.sendEphemeral(teamId, event.channel, event.user, `<@${event.user}> ainda não tens estatisticas.`)
-    }
-  } else {
-    message.sendEphemeral(teamId, event.channel, event.user, `<@${event.user}> ainda não tens estatisticas.`)
-  }
+  const min = (userStats.minimumOffset === Number.POSITIVE_INFINITY) ? 'N/A' : userStats.minimumOffset
+
+  workspace.sendEphemeral(
+    event.channel,
+    event.user,
+    `<@${event.user}>:\n > Jogos Ganhos: ${userStats.gamesWon}\n > Jogos Totais: ${userStats.gamesPlayed}\n > Preço Certo: ${userStats.exactPriceMatches}\n > Diferença Mínima: ${min}`)
 }

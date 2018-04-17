@@ -8,11 +8,9 @@ const Messenger = require('../src/messenger')
 const {WebClient} = require('../src/mock-slack-client')
 
 describe('Workspace', function () {
-
-  const messenger = new Messenger('123')
-  messenger.setWebClient(new WebClient())
-
   const workspaceId = '12345'
+  const messenger = new Messenger(workspaceId)
+  messenger.setWebClient(new WebClient())
 
   describe('is created', function () {
     it('with correct initial configuration', function () {
@@ -21,7 +19,7 @@ describe('Workspace', function () {
       assert.strictEqual(workspace.id, workspaceId)
       assert.deepStrictEqual(workspace.games, {})
       assert.deepStrictEqual(workspace.stats, new Statistics())
-      assert.deepStrictEqual(workspace.messenger, new Messenger())
+      assert.deepStrictEqual(workspace.messenger, new Messenger(workspaceId))
     })
 
     it('gets user stats', function () {

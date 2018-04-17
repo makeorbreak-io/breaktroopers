@@ -26,13 +26,6 @@ const app = express()
 // You must use a body parser for JSON before mounting the adapter
 app.use(bodyParser.json())
 
-// Default route for verification
-app.post('/', (req, res) => {
-  if (req.body.challenge) {
-    res.send({challenge: req.body.challenge})
-  }
-})
-
 app.get('/oauth/', async (req, res) => {
   if (req.query.code) {
     try {
@@ -50,8 +43,12 @@ app.get('/oauth/', async (req, res) => {
   }
 })
 
-const addTeamId = (req) => {
-  req.body.event.teamId = req.body.team_id
+const addTeamId = (req, res, next) => {
+  if (req.body && req.body.event && req.body.team_id) {
+    req.body.event.teamId = req.body.team_id
+  }
+
+  next()
 }
 
 // Mount the event handler on a route
@@ -69,7 +66,11 @@ slackEvents.on('message', (event) => {
 
   const workspace = getOrCreateWorkspace(event.teamId)
 
-  workspace.handleMessage(event)
+  const channelId = event.channel
+  const userId = event.user
+  const text = event.text
+
+  workspace.handleEvent(channelId, userId, text)
 })
 
 // Handle event triggered on @Bot_name
@@ -86,7 +87,7 @@ slackEvents.on('app_mention', (event) => {
   }
 
   if (text.includes('stats')) {
-    handleStats(event)
+    handleStats(event.teamId, event.channel, event.user)
   }
 
   if (text.match(helpRegex)) {
@@ -94,9 +95,10 @@ slackEvents.on('app_mention', (event) => {
   }
 
   if (text.match(espetaculoRegex)) {
-    const error = workspace.startGame(event, onGameFinished)
+    const channelId = event.channel
+    const error = workspace.startGame(channelId, onGameFinished)
 
-    if (error) {
+    if (error instanceof Error) {
       workspace.sendMessage(event.channel, 'Já está um jogo a decorrer.')
     }
   }
@@ -117,18 +119,15 @@ function getOrCreateWorkspace (workspaceId) {
   return workspaces[workspaceId]
 }
 
-const onGameFinished = function (game) {
+const onGameFinished = function (workspace, game) {
   const playAgainMessage = '\nPara jogar novamente, mencione o bot utilizando o simbolo \'@\' seguido da mensagem \'espetáculo\' '
 
   const channelId = game.getChannelId()
   const status = game.getFinishStatus()
   const winner = game.getWinner()
   const price = game.getProduct().price
-  const teamId = game.getTeamId()
 
-  const workspace = getOrCreateWorkspace(teamId)
-
-  workspace.addGameToStatistics()
+  workspace.addGameToStatistics(game)
 
   switch (status) {
     case GameFinishStatus.WINNER:
@@ -143,14 +142,14 @@ const onGameFinished = function (game) {
   }
 }
 
-const handleStats = function (teamId, event) {
+const handleStats = function (teamId, channelId, userId) {
   const workspace = getOrCreateWorkspace(teamId)
-  const userStats = workspace.getUserStats(event.user)
+  const userStats = workspace.getUserStats(userId)
 
   const min = (userStats.minimumOffset === Number.POSITIVE_INFINITY) ? 'N/A' : userStats.minimumOffset
 
   workspace.sendEphemeral(
-    event.channel,
-    event.user,
-    `<@${event.user}>:\n > Jogos Ganhos: ${userStats.gamesWon}\n > Jogos Totais: ${userStats.gamesPlayed}\n > Preço Certo: ${userStats.exactPriceMatches}\n > Diferença Mínima: ${min}`)
+    channelId,
+    userId,
+    `<@${userId}>:\n > Jogos Ganhos: ${userStats.gamesWon}\n > Jogos Totais: ${userStats.gamesPlayed}\n > Preço Certo: ${userStats.exactPriceMatches}\n > Diferença Mínima: ${min}`)
 }

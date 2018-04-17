@@ -116,7 +116,7 @@ module.exports = class Messenger {
       // TODO: Save botAccessToken
       const webClient = new WebClient(botAccessToken)
 
-      console.log('Created webclient for workspace ' + this.workspaceId)
+      console.log('Created webclient for workspace ' + workspaceId)
 
       return {
         workspaceId,

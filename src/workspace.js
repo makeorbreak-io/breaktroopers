@@ -7,12 +7,12 @@ module.exports = class Workspace {
     this.id = workspaceId
     this.games = {}
     this.stats = new Statistics()
-    this.messenger = new Messenger()
+    this.messenger = new Messenger(workspaceId)
   }
 
-  handleMessage (event) {
-    if (this.games.hasOwnProperty(event.channel)) {
-      this.games[event.channel].handleEvent(event.user, event.text)
+  handleEvent (channelId, userId, text) {
+    if (this.games.hasOwnProperty(channelId)) {
+      this.games[channelId].handleEvent(userId, text)
     }
   }
 
@@ -26,22 +26,22 @@ module.exports = class Workspace {
 
   /**
    * Starts a game in a workspace
-   * @param event Slack event with information about workspace, channel, etc.
+   * @param channelId Channel ID
    * @param onGameFinished Callback to pass to Game
-   * @return {undefined|Error} Returns Error if the game could not be created. Returns undefined otherwise.
+   * @return {Error|Promise<void>} Returns Error if the game could not be created. Otherwise, returns the game.start() promise.
    */
-  startGame (event, onGameFinished) {
-    if (this.games.hasOwnProperty(event.channel)) {
-      const game = this.games[event.channel]
+  startGame (channelId, onGameFinished) {
+    if (this.games.hasOwnProperty(channelId)) {
+      const game = this.games[channelId]
 
       if (game.getState() !== GameState.FINISHED) {
         return new Error('game_not_finished')
       }
     }
 
-    const game = new Game(this.messenger, event.channel, onGameFinished)
-    this.games[event.channel] = game
-    game.start()
+    const game = new Game(this, channelId, onGameFinished)
+    this.games[channelId] = game
+    return game.start()
   }
 
   /**

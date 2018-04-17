@@ -22,8 +22,9 @@ const GameFinishStatus = Object.freeze({
 })
 
 class Game {
-  constructor (messenger, channelId, onGameFinished) {
-    this.messenger = messenger
+  constructor (workspace, channelId, onGameFinished) {
+    this.workspace = workspace
+    this.messenger = workspace.messenger
     this.channelId = channelId
     this.answers = {}
     this.state = GameState.STARTED
@@ -59,7 +60,7 @@ class Game {
     }
   }
 
-  handleMessage (userId, message) {
+  handleEvent (userId, message) {
     if (this.state === GameState.FINISHED) {
       this.messenger.sendMessage(this.channelId, 'O jogo já acabou! Para começar um novo, mencione o bot utilizando o simbolo \'@\' seguido da mensagem \'espetáculo\'')
       return
@@ -84,7 +85,7 @@ class Game {
     this.state = GameState.FINISHED
 
     if (Object.keys(this.answers).length < 2) {
-      this.onGameFinished(this)
+      this.onGameFinished(this.workspace, this)
       return
     }
 
@@ -100,7 +101,7 @@ class Game {
       this.gameFinishStatus = GameFinishStatus.WINNER
     }
 
-    this.onGameFinished(this)
+    this.onGameFinished(this.workspace, this)
   }
 
   getChannelId () {
@@ -125,10 +126,6 @@ class Game {
 
   getFinishStatus () {
     return this.gameFinishStatus
-  }
-
-  getTeamId () {
-    return this.teamId
   }
 }
 

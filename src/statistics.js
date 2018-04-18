@@ -1,3 +1,10 @@
+const BASE_STAT = {
+  gamesWon: 0,
+  gamesPlayed: 0,
+  exactPriceMatches: 0,
+  minimumOffset: Number.POSITIVE_INFINITY
+}
+
 module.exports = class Statistics {
   constructor () {
     this.stats = {}
@@ -6,7 +13,9 @@ module.exports = class Statistics {
   addGame (game) {
     const answers = game.getAnswers()
 
-    if (!answers) { return }
+    if (!answers) {
+      return
+    }
 
     for (let userId in answers) {
       const isWinner = game.getWinner() === userId
@@ -17,14 +26,7 @@ module.exports = class Statistics {
   }
 
   addStat (userId, answer, won, productPrice) {
-    const baseStat = {
-      gamesWon: 0,
-      gamesPlayed: 0,
-      exactPriceMatches: 0,
-      minimumOffset: Number.POSITIVE_INFINITY
-    }
-
-    const curStat = this.stats[userId] || baseStat
+    const curStat = this.stats[userId] || BASE_STAT
 
     if (productPrice === answer) {
       curStat.exactPriceMatches++
@@ -44,6 +46,6 @@ module.exports = class Statistics {
   }
 
   getUserStats (userId) {
-    return this.stats[userId]
+    return this.stats[userId] || BASE_STAT
   }
 }

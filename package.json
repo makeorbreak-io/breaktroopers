@@ -4,8 +4,8 @@
   "description": "Bot para o slack para jogar ao preço certo.",
   "scripts": {
     "test": "mocha",
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js"
   },
   "engines": {
     "node": ">=4.2.0",

@@ -61,12 +61,12 @@ class Game {
   }
 
   handleEvent (userId, message) {
-    if (this.state === GameState.FINISHED) {
+    const value = parseFloat(message.replace(',', '.'))
+
+    if (this.state === GameState.FINISHED && Number.isFinite(value)) {
       this.messenger.sendMessage(this.channelId, 'O jogo já acabou! Para começar um novo, mencione o bot utilizando o simbolo \'@\' seguido da mensagem \'espetáculo\'')
       return
     }
-
-    const value = parseFloat(message.replace(',', '.'))
 
     if (value && value > 0) {
       this.answer(userId, value)

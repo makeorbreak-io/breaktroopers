@@ -63,15 +63,19 @@ class Game {
   handleEvent (userId, message) {
     const value = parseFloat(message.replace(',', '.'))
 
-    if (this.state === GameState.FINISHED && Number.isFinite(value)) {
-      this.messenger.sendMessage(this.channelId, 'O jogo já acabou! Para começar um novo, mencione o bot utilizando o simbolo \'@\' seguido da mensagem \'espetáculo\'')
+    if (this.state === GameState.FINISHED) {
+      if (Number.isFinite(value)) {
+        this.messenger.sendMessage(this.channelId, 'O jogo já acabou! Para começar um novo, mencione o bot utilizando o simbolo \'@\' seguido da mensagem \'espetáculo\'')
+      }
       return
     }
 
     if (value && value > 0) {
       this.answer(userId, value)
     } else {
-      this.messenger.sendEphemeral(this.channelId, userId, 'Enviou um palpite errado. Os palpites devem ser números decimais. Ex.: \'1\', \'5.7\', \'1,3\'')
+      if (!Number.isNaN(value)) {
+        this.messenger.sendEphemeral(this.channelId, userId, 'Enviou um palpite errado. Os palpites devem ser números decimais positivos. Ex.: \'1\', \'5.7\', \'1,3\'')
+      }
     }
   }
 
